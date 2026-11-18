@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # ReciteFlow
 
@@ -21,12 +21,12 @@ You paste a text, press **Start**, and recite it from memory. Each word is colou
 
 | Colour | Meaning |
 |---|---|
-| 🟢 green | correct |
-| 🔴 red | wrong word |
-| 🔴 red `[missed]` | a word you skipped |
-| 🔴 red `{extra}` | a word you added |
-| 🟡 yellow | misspelled / mispronounced |
-| ⚪ grey | not said yet |
+| ðŸŸ¢ green | correct |
+| ðŸ”´ red | wrong word |
+| ðŸ”´ red `[missed]` | a word you skipped |
+| ðŸ”´ red `{extra}` | a word you added |
+| ðŸŸ¡ yellow | misspelled / mispronounced |
+| âšª grey | not said yet |
 
 The goal is "nearly perfect", **proven by benchmarks, not by feel**. The metric that matters most is *hidden mistakes*:
 a spoken mistake that the app shows as correct.
@@ -35,7 +35,7 @@ a spoken mistake that the app shows as correct.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/screenshots/gui-idle.png" alt="Start screen"><br><sub><b>1. Paste the text</b>, then press Start (Ctrl+Enter).</sub></td>
+<td width="50%"><img src="docs/screenshots/gui-start.png" alt="Start screen"><br><sub><b>1. Paste the text</b>, then press Start (Ctrl+Enter).</sub></td>
 <td width="50%"><img src="docs/screenshots/gui-live.png" alt="Live recitation"><br><sub><b>2. Recite.</b> Words appear, coloured, as you say them. The text stays hidden until said.</sub></td>
 </tr>
 </table>
