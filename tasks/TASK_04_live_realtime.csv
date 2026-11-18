@@ -1,8 +1,0 @@
-set,clip,variant,words,mistakes,right,other,hidden,fa_words,fa_extras,fa,lat_median_s,lat_p90_s,lat_max_s,passes,skipped,pass_ms,lag_max_s,checks,flags
-practice,daily_bakery_m1,spoken,42,4,3,1,0,7,0,7,1.52,2.44,3.25,31,12,342,0.85,4,misspelled:years@8 wrong:first@11 wrong:she@12 wrong:sold@13 wrong:only@14 wrong:bread@15 wrong:but@16 wrong:now@17 wrong:she@18 +only@29 +mondays@38 +closed@38 +on@38
-practice,daily_bakery_m2,spoken,42,4,4,0,0,1,0,1,1.25,1.46,1.57,26,0,309,0.0,6,misspelled:years@8 misspelled:cakes@20 missed:too@24 misspelled:shop@26 misspelled:closed@36
-practice,daily_bakery_ok,spoken,42,0,0,0,0,0,0,0,1.26,2.46,3.46,23,0,316,0.0,0,
-practice,daily_doctor_m1,spoken,44,4,4,0,0,1,0,1,1.19,1.38,1.5,18,0,313,0.0,6,misspelled:okafor@1 wrong:and@8 missed:hours@14 misspelled:sugar@31 missed:tuesday@42
-practice,daily_doctor_m2,spoken,44,4,3,1,0,1,5,6,1.15,2.16,2.32,27,0,314,0.05,7,misspelled:okafor@1 wrong:and@8 wrong:eight@13 wrong:day@27 wrong:weeks@39 +we@17 +will@17 +be@17 +right@17 +back@17
-practice,daily_doctor_ok,spoken,44,0,0,0,0,1,0,1,1.14,1.38,1.5,24,0,312,0.0,2,misspelled:okafor@1
-ALL,ALL,,,16,14,2,0,,,16,1.23,1.9,3.46,149,12,,0.85,,

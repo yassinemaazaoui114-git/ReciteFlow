@@ -1,5 +1,0 @@
-set,clip,variant,words,mistakes,right,other,hidden,fa_words,fa_extras,fa,lat_median_s,lat_p90_s,lat_max_s,passes,skipped,pass_ms,lag_max_s,checks,flags
-personal,para1,original,55,0,0,0,0,2,0,2,1.24,2.49,3.95,34,0,309,0.0,3,wrong:this@41 misspelled:step@44
-personal,para2,original,55,0,0,0,0,1,0,1,1.15,1.46,2.66,44,0,324,0.0,2,misspelled:step@44
-personal,para3,original,55,0,0,0,0,9,2,11,1.21,1.84,2.74,48,0,307,0.0,9,wrong:day@2 wrong:open@16 wrong:just@23 wrong:ten@24 wrong:day@27 wrong:small@42 misspelled:step@44 missed:makes@49 wrong:learning@50 +way@10 +your@10
-ALL,ALL,,,0,0,0,0,,,14,1.2,1.95,3.95,126,0,,0.0,,

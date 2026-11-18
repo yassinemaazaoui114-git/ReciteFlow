@@ -148,3 +148,7 @@ The engine and both apps work and are tested. Next:
 ## Privacy
 
 Recordings and history stay on your machine in `data/` and are not part of this repository.
+
+## License
+
+[MIT](LICENSE)
