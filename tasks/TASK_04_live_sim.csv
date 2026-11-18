@@ -1,0 +1,54 @@
+set,clip,variant,words,mistakes,right,other,hidden,fa_words,fa_extras,fa,lat_median_s,lat_p90_s,lat_max_s,passes,skipped,pass_ms,lag_max_s,checks,flags
+practice,daily_bakery_m1,spoken,42,4,3,1,0,7,0,7,1.51,2.43,3.23,31,12,341,0.86,4,misspelled:years@8 wrong:first@11 wrong:she@12 wrong:sold@13 wrong:only@14 wrong:bread@15 wrong:but@16 wrong:now@17 wrong:she@18 +only@29 +mondays@38 +closed@38 +on@38
+practice,daily_bakery_m2,spoken,42,4,4,0,0,1,0,1,1.24,1.45,1.58,26,0,311,0.0,6,misspelled:years@8 misspelled:cakes@20 missed:too@24 misspelled:shop@26 misspelled:closed@36
+practice,daily_bakery_ok,spoken,42,0,0,0,0,0,0,0,1.25,2.46,3.46,23,0,311,0.0,0,
+practice,daily_doctor_m1,spoken,44,4,4,0,0,1,0,1,1.18,1.44,1.47,18,0,308,0.0,6,misspelled:okafor@1 wrong:and@8 missed:hours@14 misspelled:sugar@31 missed:tuesday@42
+practice,daily_doctor_m2,spoken,44,4,3,1,0,1,5,6,1.15,2.16,2.32,27,0,308,0.02,7,misspelled:okafor@1 wrong:and@8 wrong:eight@13 wrong:day@27 wrong:weeks@39 +we@17 +will@17 +be@17 +right@17 +back@17
+practice,daily_doctor_ok,spoken,44,0,0,0,0,1,0,1,1.13,1.37,1.49,24,0,309,0.0,2,misspelled:okafor@1
+practice,daily_meeting_m1,spoken,41,4,3,0,1,0,1,1,1.17,1.45,2.06,19,0,306,0.13,6,wrong:week@9 missed:should@15 wrong:the@28 +higher@38
+practice,daily_meeting_m2,spoken,41,4,3,0,1,0,1,1,1.18,1.4,1.75,25,0,302,0.0,6,wrong:wednesday@5 misspelled:bring@20 wrong:new@29 +higher@38
+practice,daily_meeting_ok,spoken,41,0,0,0,0,0,1,1,1.16,1.5,1.79,26,0,303,0.0,3,+higher@38
+practice,daily_museum_m1,spoken,40,4,3,1,0,0,0,0,1.22,1.58,3.39,27,0,304,0.0,4,wrong:three@3 +a@12 +ancient@12 +egypt@12 +that@24 +still@34
+practice,daily_museum_m2,spoken,40,4,4,0,0,0,2,2,1.22,1.78,3.0,24,0,318,0.05,5,wrong:is@8 wrong:a@28 +for@16 +shows@16 +paintings@16 +thank@33 +you@33 +really@34
+practice,daily_museum_ok,spoken,40,0,0,0,0,0,0,0,1.12,1.43,1.58,22,0,303,0.0,0,
+practice,daily_plants_m1,spoken,43,4,4,0,0,0,0,0,1.19,1.42,1.51,23,0,309,0.0,4,missed:water@2 wrong:the@16 missed:kitchen@27 wrong:few@41
+practice,daily_plants_m2,spoken,43,4,3,1,0,0,1,1,1.17,1.4,1.65,20,0,308,0.03,4,wrong:week@7 wrong:near@15 missed:in@25 misspelled:move@33 +far@15
+practice,daily_plants_ok,spoken,43,0,0,0,0,0,0,0,1.12,1.34,1.47,19,0,308,0.0,0,
+practice,daily_reading_m1,spoken,39,4,3,1,0,0,0,0,1.16,1.46,1.97,25,0,303,0.0,4,missed:first@8 wrong:learn@16 wrong:week@24 misspelled:remember@34
+practice,daily_reading_m2,spoken,39,4,4,0,0,0,0,0,1.22,1.48,2.08,24,3,346,0.59,4,wrong:open@2 wrong:after@22 wrong:remember@34 +all@13
+practice,daily_reading_ok,spoken,39,0,0,0,0,0,0,0,1.09,1.4,1.54,23,0,307,0.0,0,
+practice,daily_soup_m1,spoken,47,4,3,1,0,0,1,1,1.2,1.51,2.16,28,0,314,0.0,4,wrong:three@5 wrong:little@16 wrong:ten@29 wrong:half@44 +lot@16
+practice,daily_soup_m2,spoken,47,4,3,1,0,0,2,2,1.12,1.5,2.57,29,0,309,0.0,5,wrong:three@5 missed:the@23 wrong:ten@29 wrong:and@38 +thank@14 +you@14
+practice,daily_soup_ok,spoken,47,0,0,0,0,0,0,0,1.15,1.4,1.64,22,0,313,0.0,0,
+practice,daily_train_m1,spoken,43,4,3,1,0,0,0,0,1.14,1.44,2.18,28,0,307,0.0,5,missed:at@5 wrong:five@21 wrong:buy@27 wrong:the@41
+practice,daily_train_m2,spoken,43,4,3,1,0,0,0,0,1.21,1.61,1.91,24,0,316,0.0,5,missed:edinburgh@3 wrong:five@21 wrong:friday@31 +very@41
+practice,daily_train_ok,spoken,43,0,0,0,0,0,0,0,1.17,1.47,1.81,26,0,310,0.0,1,
+practice,daily_village_m1,spoken,47,4,3,1,0,4,0,4,1.2,1.65,2.51,31,0,316,0.0,6,wrong:the@10 wrong:mountains@11 wrong:road@13 wrong:it@19 wrong:an@28 wrong:old@29 wrong:evening@37 +a@10 +but@18
+practice,daily_village_m2,spoken,47,4,3,0,1,1,0,1,1.23,1.49,2.34,26,0,312,0.0,4,wrong:north@4 missed:it@19 wrong:red@33 +morning@37 +and@37 +every@37
+practice,daily_village_ok,spoken,47,0,0,0,0,0,0,0,1.11,1.39,1.54,28,0,307,0.0,0,
+practice,daily_violin_m1,spoken,38,4,4,0,0,0,0,0,1.23,1.53,2.23,24,0,307,0.0,4,wrong:afternoon@15 misspelled:years@21 wrong:his@31 +very@9
+practice,daily_violin_m2,spoken,38,4,3,1,0,1,0,1,1.1,1.47,2.36,26,0,307,0.0,4,wrong:nine@8 missed:an@12 misspelled:hour@13 wrong:ten@20 wrong:front@36
+practice,daily_violin_ok,spoken,38,0,0,0,0,0,0,0,1.16,1.4,1.47,20,0,307,0.13,0,
+practice,daily_walk_m1,spoken,48,4,1,3,0,1,1,2,1.17,1.52,3.28,35,0,310,0.0,4,wrong:morning@6 wrong:near@16 wrong:the@26 wrong:way@27 wrong:dozen@35 +far@16
+practice,daily_walk_m2,spoken,48,4,4,0,0,0,0,0,1.14,1.42,1.78,25,0,314,0.07,4,wrong:morning@6 wrong:small@14 wrong:starts@44 +also@34
+practice,daily_walk_ok,spoken,48,0,0,0,0,0,0,0,1.2,1.43,1.64,27,0,309,0.0,0,
+practice,pub_clean_283039800057_5u_m1,spoken,58,4,3,1,0,2,0,2,1.27,1.83,2.81,23,0,322,0.0,4,missed:noble@6 missed:because@15 misspelled:loses@36 missed:or@51 missed:an@52 wrong:angel@53
+practice,pub_clean_283039800057_5u_ok,spoken,58,0,0,0,0,0,0,0,1.15,1.44,2.05,31,0,317,0.0,0,
+practice,pub_clean_29619600003_4u_m1,spoken,123,4,4,0,0,0,0,0,1.16,1.44,1.94,51,0,324,0.0,6,wrong:is@40 wrong:is@70 missed:own@121 +only@30
+practice,pub_clean_61709680021_4u_m1,spoken,55,4,4,0,0,2,0,2,1.22,1.62,3.05,20,0,328,0.0,4,misspelled:fine@8 wrong:this@24 wrong:the@38 wrong:squire@39 missed:purse@52 +a@38 +bout@38 +spoke@38
+practice,pub_clean_61709680021_4u_ok,spoken,55,0,0,0,0,2,0,2,1.16,1.52,1.85,21,0,333,0.0,1,wrong:the@38 wrong:squire@39
+practice,pub_clean_6721227970071_4u_m1,spoken,74,4,4,0,0,2,0,2,1.28,2.13,3.29,26,0,328,0.0,7,wrong:the@17 missed:the@30 misspelled:whole@42 misspelled:it@57 wrong:sighed@58 wrong:at@71
+practice,pub_clean_6721227970071_4u_ok,spoken,74,0,0,0,0,2,0,2,1.19,1.45,1.54,26,0,329,0.0,3,misspelled:it@57 wrong:sighed@58
+practice,pub_clean_6930759180000_4u_m1,spoken,126,4,4,0,0,2,2,4,1.22,1.49,3.06,53,0,328,0.0,5,wrong:young@31 misspelled:poured@53 wrong:three@87 wrong:she@88 misspelled:native@107 +or@89 +three@89 +she@89
+practice,pub_long_clean_15801410840000_24u_m1,spoken,303,8,7,1,0,1,0,1,1.16,1.44,2.66,136,0,320,0.29,14,wrong:is@34 misspelled:names@44 wrong:the@100 missed:with@148 wrong:is@181 missed:the@190 missed:his@221 misspelled:palm@259 missed:would@279
+practice,pub_long_clean_7176880830000_14u_m1,spoken,320,8,7,0,1,2,0,2,1.22,1.47,2.64,128,0,333,0.05,11,misspelled:back@32 misspelled:black@33 missed:toothed@67 wrong:a@136 misspelled:he@190 wrong:last@235 missed:refuge@299 +front@32 +white@32 +without@243 +just@243 +vanished@243
+practice,pub_long_other_35381636190000_14u_m1,spoken,335,8,6,2,0,2,0,2,1.19,1.48,2.43,138,0,328,0.23,9,wrong:his@16 misspelled:thing@59 wrong:could@112 wrong:not@113 misspelled:make@130 wrong:is@174 wrong:the@241 missed:the@291 wrong:down@294 wrong:as@295
+practice,pub_other_26091569750033_4u_m1,spoken,92,4,3,1,0,3,0,3,1.18,1.46,2.2,44,0,320,0.0,4,wrong:the@5 wrong:this@43 missed:and@51 wrong:his@75 wrong:sense@76 wrong:of@77 wrong:need@78
+practice,pub_other_26091569750033_4u_ok,spoken,92,0,0,0,0,0,0,0,1.13,1.39,1.55,42,0,322,0.0,0,
+practice,pub_other_30051633900015_4u_m1,spoken,78,4,2,2,0,5,0,5,1.27,1.78,2.21,35,0,323,0.0,10,wrong:second@4 wrong:fourteen@7 wrong:fifteen@10 wrong:second@13 wrong:second@16 misspelled:times@36 misspelled:cain@39 missed:the@47 +also@61
+practice,pub_other_39971802940000_4u_m1,spoken,63,4,3,1,0,1,0,1,1.23,1.43,1.88,22,0,327,0.0,5,missed:but@25 missed:something@32 wrong:bolts@58 wrong:wretch@62 +still@15
+practice,pub_other_39971802940000_4u_ok,spoken,63,0,0,0,0,1,0,1,1.16,1.41,1.5,24,0,331,0.0,0,missed:wretch@62
+practice,pub_other_5484243170029_4u_m1,spoken,99,4,4,0,0,0,0,0,1.16,1.45,2.04,51,0,314,0.23,6,wrong:and@10 misspelled:she@30 wrong:the@70 missed:so@75
+practice,pub_other_5484243170029_4u_ok,spoken,99,0,0,0,0,1,0,1,1.13,1.4,1.64,46,0,319,0.0,2,misspelled:idle@92
+practice,pub_other_7902965910000_6u_m1,spoken,73,4,4,0,0,4,0,4,1.2,1.59,2.63,35,0,321,0.0,5,wrong:and@19 wrong:as@42 wrong:great@43 misspelled:risdon@54 wrong:graeme@55 wrong:could@61 +but@19 +to@19 +come@19 +on@28 +anything@28 +came@28
+ALL,ALL,,,152,126,22,4,,,67,1.18,1.48,3.46,1777,15,,0.86,,

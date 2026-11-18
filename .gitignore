@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# private recordings, history, audio and models
+data/
+clips/
+*.wav
+*.db
+*.onnx
+
+# personal notes
+My Enhancement List.txt
+
+# secrets
+.env
+*.key

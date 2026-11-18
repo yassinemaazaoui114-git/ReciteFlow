@@ -1,0 +1,12 @@
+rapidfuzz
+num2words
+pytest
+numpy
+soundfile
+sounddevice
+customtkinter
+faster-whisper
+silero-vad
+# Windows + CUDA: cuBLAS/cuDNN DLLs for faster-whisper (ctranslate2); asr/_cuda.py puts them on the DLL path
+nvidia-cublas-cu12; sys_platform == "win32"
+nvidia-cudnn-cu12==9.*; sys_platform == "win32"
