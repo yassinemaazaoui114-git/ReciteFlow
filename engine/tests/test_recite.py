@@ -2,7 +2,11 @@
 
 from core import DisplayWord
 from core.history import History, token_list
-from recite import HISTORY_DB, Engine, draw_tokens, result
+from types import SimpleNamespace
+
+from asr.words import Word
+from core import Session
+from recite import HISTORY_DB, Engine, draw_tokens, heard_words, result
 
 
 def _words():
@@ -26,6 +30,18 @@ def test_draw_tokens_and_result():
     assert drawn[1]["labels"] == ["extra", "not_said"]
     assert result(SUMMARY, toks) == {"correct": 1, "total": 3, "said": 2, "extras": ["um"], "fixed": 0,
                                      "corrections": 0}
+    assert not any(t["heard"] for t in drawn)
+    assert [t["heard"] for t in draw_tokens(toks, {2}, heard={2})] == [False, False, False, True]
+
+
+def test_heard_words_are_the_next_ones_after_the_coloured_words():
+    sess = Session("The cat - sat on the mat", recognizer=None)
+    sess.matcher.feed(["the", "cat"], final=False)
+    assert heard_words(sess) == set()  # no live pass yet
+    sess._live = SimpleNamespace(_prev=[Word("sat", 1.0, 1.2, 0.9), Word("on", 1.2, 1.3, 0.9)])
+    assert heard_words(sess) == {2, 3, 4}  # "-" has no spoken word: shown with its neighbours
+    sess._live._prev = [Word("sat", 1.0, 1.2, 0.9)] * 9  # never past the end of the text
+    assert heard_words(sess) == {2, 3, 4, 5, 6}
 
 
 def test_correct_saves_and_updates_the_counts(tmp_path):

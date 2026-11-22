@@ -79,8 +79,8 @@ function update() {
   $('hint').innerHTML = {
     edit: `Paste the text you want to recite, then press Start ${kbd('Ctrl+Enter')}`,
     listening: (hide.checked
-      ? 'Recite from memory: each word appears, coloured, about a second after you say it. '
-      : 'Recite the text from memory. Each word is coloured about a second after you say it. ')
+      ? 'Recite from memory: each word appears as you say it and takes its colour a moment later. '
+      : 'Recite the text from memory. Each word darkens as you say it and takes its colour a moment later. ')
       + (beep.checked ? 'A beep means a mistake. ' : '') + `${kbd('Esc')} to stop.`,
     finishing: 'Checking the last words...'
   }[phase]
@@ -322,7 +322,7 @@ function tone() {
 // Keep the first word not yet said in view (in hide mode it is not drawn: keep the end in view)
 function follow() {
   const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-  const next = words.querySelector('.w[data-state="pending"]')
+  const next = words.querySelector('.w[data-state="pending"]:not([data-heard])')
   if (next) next.scrollIntoView({ block: 'nearest', behavior })
   else scroll.scrollTo({ top: scroll.scrollHeight, behavior })
 }

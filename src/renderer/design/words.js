@@ -12,9 +12,10 @@ export const LABELS = {
   extra: ['Really said', 'extra word'], not_said: ['Not said', 'the app invented it']
 }
 
-// Hide mode: words not yet said are left out and a "…" follows the last said word.
+// Hide mode: words not yet said are left out and a "…" follows the last said word. A word the engine has heard
+// but not checked yet (heard) is drawn plain, so it appears as it is said and takes its colour a moment later.
 export function drawWords(el, tokens, { hide = false } = {}) {
-  const shown = hide ? tokens.filter((t) => !(t.kind === 'word' && t.state === 'pending')) : tokens
+  const shown = hide ? tokens.filter((t) => !(t.kind === 'word' && t.state === 'pending' && !t.heard)) : tokens
   const out = document.createDocumentFragment()
   for (const t of shown) {
     const w = document.createElement('span')
@@ -23,6 +24,7 @@ export function drawWords(el, tokens, { hide = false } = {}) {
     w.dataset.pos = t.pos
     if (t.underline) w.dataset.underline = ''
     if (t.corrected) w.dataset.corrected = ''
+    if (t.heard) w.dataset.heard = ''
     w.textContent = t.text
     out.append(w, t.sep)
   }

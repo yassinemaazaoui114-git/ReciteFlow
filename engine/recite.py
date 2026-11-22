@@ -3,7 +3,8 @@ the view helpers, ready-to-draw frames and corrections. The server (`server.py`)
 Electron window only draws what it sends.
 
 Events go through `post(event, data)` (same shape as `server.emit`):
-  "frame"  {tokens, counts, beep, at}        on every engine frame (live passes ~0.6 s, pause re-check overrides);
+  "frame"  {tokens, counts, beep, at}        on every engine frame (live passes ~0.6 s, pause re-check overrides); a word token
+                                             has heard=True while heard by a pass but not coloured yet;
                                              at = time.perf_counter() when sent (to measure delivery)
   "done"   {finished, rec_id, note, tokens, counts, result, stats}   after the last frame; stats = the session's
            display_lags and realign_lags (s), for latency measurements
@@ -86,11 +87,28 @@ def input_devices():
 
 # --- ready-to-draw data ------------------------------------------------------------------------------------
 
-def draw_tokens(toks, breaks):
-    """The tokens as plain dicts for the window. `underline` = recovered and not corrected by the user; `corrected` = the user labelled it (tinted); `labels` = the correction menu's choices."""
+def heard_words(session):
+    """Indexes of the target words the last live pass heard that are not coloured yet: the words held back by
+    the matcher plus the pass's words that wait for the next pass to agree, laid on the next target words.
+    They are shown plain (not checked) so a word appears as soon as it is heard; the colours do not change."""
+    live = getattr(session, "_live", None)
+    hyp = live._prev if live is not None else None
+    if not hyp:
+        return set()
+    from matcher import normalize
+
+    m = session.matcher
+    lo = m.pointer
+    hi = min(len(m.target), lo + len(m.held()) + sum(len(normalize(w.word)) for w in hyp))
+    return {k for k, (a, b) in enumerate(session._spans) if (a < hi and b > lo) or (a == b and lo <= a < hi)}
+
+
+def draw_tokens(toks, breaks, heard=()):
+    """The tokens as plain dicts for the window. `underline` = recovered and not corrected by the user; `corrected` = the user labelled it (tinted); `labels` = the correction menu's choices; `heard` = not yet said for the matcher but heard by the last pass (shown plain)."""
     return [{"pos": t.pos, "kind": t.kind, "text": shown(t), "state": t.state, "sep": separator(t, breaks),
              "app_state": t.app_state, "corrected": t.user_state is not None,
-             "underline": bool(t.recovered and not t.user_state), "labels": list(labels_for(t.kind))}
+             "underline": bool(t.recovered and not t.user_state), "labels": list(labels_for(t.kind)),
+             "heard": t.kind == "word" and t.state == "pending" and t.word_index in heard}
             for t in toks]
 
 
@@ -130,6 +148,7 @@ class Engine:
         self.text, self.breaks, self.toks, self.summary = "", set(), [], {}
         self.rec_id = None  # history id of the finished recitation (corrections go there)
         self._beeped = set()  # mistake keys already announced (new_mistakes)
+        self._heard_of = None  # the live pass words the last frame showed as heard
 
     def load(self):
         """Load the recognizer here (the server loads it itself). Raises on failure."""
@@ -160,20 +179,28 @@ class Engine:
         self._running = False
         self.post(event, data)
 
-    def _until_stop(self, blocks):
+    def _until_stop(self, blocks, session=None):
         for block in blocks:
             if self._stop.is_set():
                 return
             yield block
+            # The session asks for the next block right after handling this one: a live pass that heard new
+            # words without committing any gets its frame here, before waiting for more audio
+            live = getattr(session, "_live", None)
+            if live is not None and live._prev is not self._heard_of:
+                self._frame(session)
 
-    def _frame(self, session, first=False):
+    def _frame(self, session, first=False, live=True):
         words, tail = session.display()
         if first:
             self.breaks = line_breaks(self.text, words)
         self.toks, self.summary = token_list(words, tail), session.summary()
+        passes = getattr(session, "_live", None)
+        self._heard_of = passes._prev if passes is not None else None
+        heard = heard_words(session) if live and not session.finished else set()
         beep = bool(new_mistakes(self.toks, self._beeped))
-        self.post("frame", {"tokens": draw_tokens(self.toks, self.breaks), "counts": self.summary, "beep": beep,
-                            "at": time.perf_counter()})
+        self.post("frame", {"tokens": draw_tokens(self.toks, self.breaks, heard), "counts": self.summary,
+                            "beep": beep, "at": time.perf_counter()})
 
     def _run(self, text, device, wav, keep_audio):
         try:
@@ -187,10 +214,10 @@ class Engine:
                 blocks = AudioTap(from_wav(wav, realtime=True) if wav else mic.blocks())
                 session.started = time.perf_counter()
                 self._frame(session, first=True)
-                for _ in session.run(self._until_stop(blocks), segmenter):
+                for _ in session.run(self._until_stop(blocks, session), segmenter):
                     self._frame(session)
             session.finish()
-            self._frame(session)
+            self._frame(session, live=False)
             rec_id, note = self._save(session, blocks, wav, keep_audio and not wav, DEFAULT_MODE)
             self.rec_id = rec_id
             self._end("done", {"finished": session.finished, "rec_id": rec_id, "note": note,

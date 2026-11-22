@@ -322,6 +322,8 @@ body {
   color: var(--w-wrong); background: var(--w-wrong-bg); box-shadow: 0 0 0 0.12em var(--w-wrong-bg);
 }
 .w[data-state='pending'] { color: var(--w-pending); }
+/* Heard, not checked yet: plain ink until its colour comes */
+.w[data-heard] { color: var(--ink); }
 .w[data-state='not_said'] { color: var(--w-pending); text-decoration: line-through; text-decoration-thickness: 1.5px; }
 /* Recovered: said wrong, then re-recited right: stays red, underlined */
 .w[data-underline] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }

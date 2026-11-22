@@ -51,7 +51,7 @@ const pct = (xs, p) => {
 const WATCH = `(() => {
   const words = document.getElementById('words')
   const scroll = document.getElementById('scroll')
-  const w = window.__watch = { paints: [], tones: 0, maxGap: 0, lastFrame: 0, follow: [], gaps: [] }
+  const w = window.__watch = { paints: [], tones: 0, maxGap: 0, lastFrame: 0, follow: [], gaps: [], heardAt: {}, colorAt: {} }
   const shown = (el) => {
     if (!el) return true
     const a = el.getBoundingClientRect(), b = scroll.getBoundingClientRect()
@@ -60,7 +60,7 @@ const WATCH = `(() => {
   let seq = 0
   const check = (n) => {
     if (n !== seq || document.getElementById('page').dataset.phase !== 'listening') return   // redrawn again since: that one is checked
-    const next = words.querySelector('.w[data-state="pending"]')
+    const next = words.querySelector('.w[data-state="pending"]:not([data-heard])')
     const end = scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop <= 2
     w.follow.push(next ? shown(next) : end)
   }
@@ -68,11 +68,15 @@ const WATCH = `(() => {
     if (!words.childNodes.length || document.getElementById('page').dataset.phase === 'done') return
     const n = ++seq
     const ws = [...words.querySelectorAll('.w')]
+    const heard = ws.filter((e) => e.dataset.heard !== undefined)
     const paint = { colored: ws.filter((e) => e.dataset.state !== 'pending').length,
-      pendingDrawn: ws.length - ws.filter((e) => e.dataset.state !== 'pending').length,
+      pendingDrawn: ws.filter((e) => e.dataset.state === 'pending').length - heard.length, heard: heard.length,
       more: !!words.querySelector('.more') }
+    const colored = ws.filter((e) => e.dataset.state !== 'pending')
     requestAnimationFrame(() => {
       paint.at = performance.timeOrigin + performance.now()
+      for (const e of heard) w.heardAt[e.dataset.pos] ??= paint.at
+      for (const e of colored) w.colorAt[e.dataset.pos] ??= [paint.at, e.dataset.state]
       paint.tally = document.getElementById('tally').textContent
       w.paints.push(paint)
     })
@@ -177,6 +181,17 @@ export async function run(win, engine) {
       if (w.paints.some((p) => p.pendingDrawn > 0)) fail('an unsaid word was drawn in hide mode')
       if (!w.paints.slice(0, -1).some((p) => p.more)) fail('no "…" while words were left')
     }
+    // Heard words: shown plain before their colour. How much sooner a word appears than its colour
+    const early = Object.entries(w.colorAt).filter(([pos]) => w.heardAt[pos] !== undefined)
+      .map(([pos, [at, state]]) => ({ gain: (at - w.heardAt[pos]) / 1000, state }))
+    const lagsC = done.stats.display_lags
+    const gains = early.map((e) => e.gain)
+    note(`heard early: ${early.length} of ${Object.keys(w.colorAt).length} coloured words, sooner by median ` +
+      `${pct(gains, 0.5).toFixed(2)} s, p90 ${pct(gains, 0.9).toFixed(2)} s; then coloured as mistakes: ` +
+      `${early.filter((e) => e.state !== 'correct').length}; colour after the word: median ${pct(lagsC, 0.5).toFixed(2)} s, ` +
+      `p90 ${pct(lagsC, 0.9).toFixed(2)} s`)
+    if (!early.length) fail('no word was shown as heard before its colour')
+    if (gains.some((g) => g < 0)) fail('a heard mark came after the colour')
     const inView = w.follow.filter(Boolean).length
     note(`first unsaid word (or the end) in view after a redraw: ${inView} of ${w.follow.length}`)
     if (inView < w.follow.length) fail('the page did not follow the reading')
