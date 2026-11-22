@@ -1,7 +1,8 @@
 // The window: the text screen (paste a text, pick the mic and options, Start), the engine's status, and the
 // recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
-// it is done, the whole text, the result line, Recite again and Edit text.
-import { drawTally, drawWords } from './design/words.js'
+// it is done, the whole text, the result line, Recite again and Edit text; after a saved recitation a click on a word
+// opens the menu to correct the app.
+import { LABELS, drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
 const $ = (id) => document.getElementById(id)
@@ -16,6 +17,7 @@ const scroll = $('scroll')
 const words = $('words')
 const tally = $('tally')
 const edit = $('edit')
+const menu = $('menu')
 
 let phase = 'edit'
 let engine = { status: 'starting' }
@@ -68,6 +70,8 @@ function update() {
   page.hidden = phase === 'edit'
   page.dataset.phase = phase
   edit.hidden = phase !== 'done'
+  if (phase !== 'done') closeMenu()
+  words.toggleAttribute('data-clickable', canCorrect())
   mic.disabled = !idle || !!dev.wav
   keep.disabled = !idle || !!dev.wav || !settingsRead || engine.history === null
   hide.disabled = !idle   // the beep can be switched any time
@@ -95,6 +99,103 @@ function showResult() {
     + (r.fixed ? ` ${r.fixed} fixed by re-reciting (underlined).` : '')
     + (finished.rec_id !== null ? ' Click a word the app got wrong to correct it.' : ''))
 }
+
+// ---- Corrections (after a saved recitation): click a word, pick what was really said ----
+const canCorrect = () => phase === 'done' && finished?.rec_id != null
+let openPos = null   // the word whose menu is open
+let saving = false
+
+function closeMenu() {
+  menu.hidden = true
+  words.querySelector('[data-open]')?.removeAttribute('data-open')
+  openPos = null
+}
+
+// The menu: what the app said, the allowed labels (a check mark on the current one), Undo when corrected
+const shade = (state) => (state === 'extra' || state === 'missed' ? 'wrong' : state)
+function openMenu(w) {
+  const t = finished.tokens[+w.dataset.pos]
+  closeMenu()
+  openPos = t.pos
+  w.dataset.open = ''
+  const said = document.createElement('div')
+  said.className = 'menu-said'
+  const b = document.createElement('b')
+  b.style.color = `var(--w-${shade(t.app_state)})`
+  b.textContent = LABELS[t.app_state]?.[0] ?? t.app_state
+  said.append('The app said: ', b)
+  const item = (label, text, why, on) => {
+    const el = document.createElement('button')
+    el.className = 'menu-item'
+    el.dataset.label = label
+    el.setAttribute('role', label === 'undo' ? 'menuitem' : 'menuitemradio')
+    if (label !== 'undo') el.setAttribute('aria-checked', String(on))
+    el.innerHTML = `<span class="tick">${on ? '<svg class="icon"><use href="#i-check" /></svg>' : ''}</span>`
+    el.append(text)
+    if (why) {
+      const q = document.createElement('span')
+      q.className = 'why'
+      q.textContent = `(${why})`
+      el.append(' ', q)
+    }
+    return el
+  }
+  const rows = [said, ...t.labels.map((l) => item(l, LABELS[l][0], LABELS[l][1], t.state === l))]
+  if (t.corrected) {
+    const sep = document.createElement('div')
+    sep.className = 'menu-sep'
+    rows.push(sep, item('undo', 'Undo my correction', null, false))
+  }
+  menu.replaceChildren(...rows)
+  // under the word, kept inside the page
+  const box = w.getBoundingClientRect()
+  const wrap = page.getBoundingClientRect()
+  menu.hidden = false
+  const m = menu.getBoundingClientRect()
+  const below = box.bottom - wrap.top + 6
+  menu.style.left = `${Math.max(8, Math.min(box.left - wrap.left, wrap.width - m.width - 8))}px`
+  menu.style.top = `${below + m.height > wrap.height - 8 ? Math.max(8, box.top - wrap.top - m.height - 6) : below}px`
+  menu.querySelector('.menu-item')?.focus()
+}
+
+async function correct(pos, state) {
+  saving = true
+  const res = await api.correct(finished.rec_id, pos, state)
+  saving = false
+  if (phase !== 'done') return
+  if (res.error) return showStatus('bad', res.error)
+  finished = { ...finished, tokens: res.tokens, counts: res.counts, result: res.result }
+  drawWords(words, res.tokens)
+  drawTally(tally, res.counts)
+  showResult()
+  showStatus('ok', `Saved #${finished.rec_id}: ${res.result.corrections} correction(s)`)
+}
+
+words.addEventListener('click', (e) => {
+  const w = e.target.closest('.w')
+  if (!w || !canCorrect() || saving) return
+  e.stopPropagation()
+  if (openPos === +w.dataset.pos) return closeMenu()
+  openMenu(w)
+})
+menu.addEventListener('click', (e) => {
+  e.stopPropagation()
+  const el = e.target.closest('.menu-item')
+  if (!el || saving) return
+  const pos = openPos
+  closeMenu()
+  correct(pos, el.dataset.label === 'undo' ? null : el.dataset.label)
+})
+menu.addEventListener('keydown', (e) => {
+  const items = [...menu.querySelectorAll('.menu-item')]
+  const i = items.indexOf(document.activeElement)
+  if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus() }
+  if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus() }
+  if (e.key === 'Tab') { e.preventDefault(); closeMenu() }
+})
+document.addEventListener('click', () => { if (!menu.hidden) closeMenu() })
+scroll.addEventListener('scroll', () => { if (!menu.hidden) closeMenu() })
+window.addEventListener('resize', () => { if (!menu.hidden) closeMenu() })
 
 // ---- Engine status ----
 const LIGHT = {
@@ -193,7 +294,10 @@ edit.addEventListener('click', editText)
 $('again').addEventListener('click', () => api.restartEngine())
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); start() }
-  if (e.key === 'Escape') stop()
+  if (e.key === 'Escape') {
+    if (!menu.hidden) return closeMenu()
+    stop()
+  }
 })
 
 // ---- The live words ----

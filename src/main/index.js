@@ -9,6 +9,8 @@ import { Engine } from './engine'
 if (process.env.RECITEFLOW_SELFTEST && !process.env.RECITEFLOW_DB) {
   process.env.RECITEFLOW_DB = join(tmpdir(), 'reciteflow-selftest', 'history.db')
 }
+// The corrections check saves its replay (into that temporary history), so it can be corrected
+if (process.env.RECITEFLOW_SELFTEST === 'correct') process.env.RECITEFLOW_SAVE_REPLAY = '1'
 const engine = new Engine(join(app.getAppPath(), 'engine'))
 
 // Run a command and return its first output line, or null when it is missing.
@@ -131,6 +133,8 @@ app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_SELFTEST === 'text') return (await import('./selftest-text')).run(win, engine)
   // RECITEFLOW_SELFTEST=recite: the reciting screen check (src/main/selftest-recite.js)
   if (process.env.RECITEFLOW_SELFTEST === 'recite') return (await import('./selftest-recite')).run(win, engine)
+  // RECITEFLOW_SELFTEST=correct: the corrections check (src/main/selftest-correct.js)
+  if (process.env.RECITEFLOW_SELFTEST === 'correct') return (await import('./selftest-correct')).run(win, engine)
   // RECITEFLOW_SELFTEST=1: print what the page shows, save a picture of it in test_out/, then quit
   if (process.env.RECITEFLOW_SELFTEST) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
