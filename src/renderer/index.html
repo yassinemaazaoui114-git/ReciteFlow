@@ -40,6 +40,10 @@
 
       <textarea class="field" id="text" spellcheck="false" aria-label="Text to recite"
         placeholder="Paste the text you want to recite"></textarea>
+      <section class="page reciting" id="page" data-phase="edit" aria-label="Your recitation" hidden>
+        <div class="scroll" id="scroll"><p class="words" id="words"></p></div>
+        <ul class="tally" id="tally" aria-label="Counters"></ul>
+      </section>
 
       <div class="bar">
         <label class="option"><input type="checkbox" class="switch" id="hide" checked /> Hide the text while I recite</label>

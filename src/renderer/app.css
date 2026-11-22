@@ -24,6 +24,13 @@ body { overflow: hidden; }
 /* The text box takes the room that is left */
 .app .field { flex: 1; min-height: 120px; margin-top: var(--s1); }
 
+/* Reciting: the page takes the text box's place; the words scroll, the counters stay at the bottom */
+.app .page.reciting { flex: 1; min-height: 120px; margin-top: var(--s1); display: flex; flex-direction: column;
+  padding: var(--s6) var(--s10) var(--s5); }
+.page.reciting[hidden], .app .field[hidden] { display: none; }
+.reciting .scroll { flex: 1; min-height: 0; overflow-y: auto; scroll-padding-block: calc(var(--read-live) * 2); }
+.reciting .tally { flex: none; }
+
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s6); }
 .bar .picker { flex: 0 1 300px; }
 .bar .grow { flex: 1; }
@@ -31,5 +38,6 @@ body { overflow: hidden; }
 
 @media (max-width: 760px) {
   .app { padding: var(--s4); }
+  .app .page.reciting { padding: var(--s5) var(--s6) var(--s4); }
   .sub .light { display: none; }
 }

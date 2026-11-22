@@ -1,5 +1,7 @@
 // The window: the text screen (paste a text, pick the mic and options, Start), the engine's status, and the
-// recitation's phases: edit -> listening -> finishing -> edit.
+// recitation's phases: edit -> listening -> finishing -> edit. While reciting, the page shows the live words.
+import { drawTally, drawWords } from './design/words.js'
+
 const api = window.reciteflow
 const $ = (id) => document.getElementById(id)
 const box = $('text')
@@ -8,6 +10,10 @@ const mic = $('mic')
 const keep = $('keep')
 const hide = $('hide')
 const beep = $('beep')
+const page = $('page')
+const scroll = $('scroll')
+const words = $('words')
+const tally = $('tally')
 
 let phase = 'edit'
 let engine = { status: 'starting' }
@@ -55,6 +61,9 @@ function update() {
   }[phase]
   go.disabled = idle ? !loaded() : phase === 'finishing'
   box.readOnly = !idle
+  box.hidden = !idle
+  page.hidden = idle
+  page.dataset.phase = phase
   mic.disabled = !idle || !!dev.wav
   keep.disabled = !idle || !!dev.wav || !settingsRead || engine.history === null
   hide.disabled = !idle   // the beep can be switched any time
@@ -128,6 +137,10 @@ async function start() {
   const text = box.value.trim()
   if (!text) return showStatus('bad', 'Paste a text first.')
   phase = 'listening'
+  drawn = null
+  words.replaceChildren()
+  drawTally(tally, {})
+  audio.resume()   // on a key press or click, so the tone is allowed to play
   showStatus('wait', dev.wav ? 'Starting the replay...' : 'Starting the microphone...')
   update()
   const res = await api.start({ text, device: dev.wav || mic.value === '' ? null : Number(mic.value),
@@ -154,8 +167,44 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') stop()
 })
 
+// ---- The live words ----
+let drawn = null   // the tokens on screen, to skip a frame that changes nothing
+const audio = new AudioContext()   // made once at start-up: making it on Start held the page ~0.1 s
+
+// The tone for a new mistake (880 Hz, 160 ms), with a 5 ms fade at each end so it does not click
+function tone() {
+  const t = audio.currentTime
+  const osc = audio.createOscillator()
+  const gain = audio.createGain()
+  osc.frequency.value = 880
+  gain.gain.setValueAtTime(0, t)
+  gain.gain.linearRampToValueAtTime(0.3, t + 0.005)
+  gain.gain.setValueAtTime(0.3, t + 0.155)
+  gain.gain.linearRampToValueAtTime(0, t + 0.16)
+  osc.connect(gain).connect(audio.destination)
+  osc.start(t)
+  osc.stop(t + 0.16)
+}
+
+// Keep the first word not yet said in view (in hide mode it is not drawn: keep the end in view)
+function follow() {
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  const next = words.querySelector('.w[data-state="pending"]')
+  if (next) next.scrollIntoView({ block: 'nearest', behavior })
+  else scroll.scrollTo({ top: scroll.scrollHeight, behavior })
+}
+
 // ---- Recitation events ----
-api.onFrame(() => {
+api.onFrame((frame) => {
+  if (phase === 'edit') return
+  const key = JSON.stringify(frame.tokens)
+  if (key !== drawn) {
+    drawn = key
+    drawWords(words, frame.tokens, { hide: hide.checked })
+    follow()
+  }
+  drawTally(tally, frame.counts)
+  if (frame.beep && beep.checked && phase === 'listening') tone()
   if (phase === 'listening' && $('status').dataset.tone !== 'live') {
     showStatus('live', dev.wav ? 'Replaying the recording' : 'Listening')
   }
