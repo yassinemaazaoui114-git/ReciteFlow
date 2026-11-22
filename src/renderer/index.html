@@ -35,12 +35,12 @@
         <span class="light" id="engine" data-state="starting">Starting the engine...</span>
       </div>
 
-      <div class="message" id="message" data-tone="bad" hidden>
+      <div class="message" id="message" data-tone="bad" role="alert" hidden>
         <span class="mark mark-bad"><svg class="icon"><use href="#i-cross" /></svg></span>
         <p id="message-text"></p>
         <button class="btn btn-quiet btn-small" id="again" hidden>Start again</button>
       </div>
-      <div class="message" id="history-off" data-tone="wait" hidden>
+      <div class="message" id="history-off" data-tone="wait" role="status" hidden>
         <span class="mark mark-wait">!</span>
         <p>History is off (could not open data/history.db). Recitations are not saved.</p>
       </div>
@@ -77,8 +77,10 @@
           <svg class="icon"><use href="#i-down" /></svg></label>
         <label class="option"><input type="checkbox" class="switch" id="keep" /> Keep my recordings for training</label>
         <span class="grow"></span>
-        <button class="btn btn-quiet" id="edit" hidden><svg class="icon"><use href="#i-edit" /></svg>Edit text</button>
-        <button class="btn btn-go" id="go" disabled><svg class="icon"><use href="#i-play" /></svg>Start</button>
+        <div class="end">
+          <button class="btn btn-quiet" id="edit" hidden><svg class="icon"><use href="#i-edit" /></svg>Edit text</button>
+          <button class="btn btn-go" id="go" disabled><svg class="icon"><use href="#i-play" /></svg>Start</button>
+        </div>
       </div>
       <div class="bar" id="settings-bar" hidden>
         <span class="grow"></span>

@@ -11,8 +11,12 @@ if (process.env.RECITEFLOW_SELFTEST && !process.env.RECITEFLOW_DB) {
 }
 // ...and never touch the window's own settings either
 if (process.env.RECITEFLOW_SELFTEST) app.setPath('userData', join(tmpdir(), 'reciteflow-selftest', 'userdata'))
-// The corrections check saves its replay (into that temporary history), so it can be corrected
-if (process.env.RECITEFLOW_SELFTEST === 'correct') process.env.RECITEFLOW_SAVE_REPLAY = '1'
+// The corrections and polish checks save their replay (into that temporary history), so it can be corrected
+if (['correct', 'polish'].includes(process.env.RECITEFLOW_SELFTEST)) process.env.RECITEFLOW_SAVE_REPLAY = '1'
+// A high-DPI run of a check: RECITEFLOW_SCALE=1.5 draws the window as on a 150% Windows display
+if (process.env.RECITEFLOW_SELFTEST && process.env.RECITEFLOW_SCALE) {
+  app.commandLine.appendSwitch('force-device-scale-factor', process.env.RECITEFLOW_SCALE)
+}
 const engine = new Engine(join(app.getAppPath(), 'engine'))
 
 // Run a command and return its first output line, or null when it is missing.
@@ -168,6 +172,8 @@ app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_SELFTEST === 'recite') return (await import('./selftest-recite')).run(win, engine)
   // RECITEFLOW_SELFTEST=correct: the corrections check (src/main/selftest-correct.js)
   if (process.env.RECITEFLOW_SELFTEST === 'correct') return (await import('./selftest-correct')).run(win, engine)
+  // RECITEFLOW_SELFTEST=polish: sizes, themes, motion and keyboard (src/main/selftest-polish.js)
+  if (process.env.RECITEFLOW_SELFTEST === 'polish') return (await import('./selftest-polish')).run(win, engine)
   // RECITEFLOW_SELFTEST=1: print what the page shows, save a picture of it in test_out/, then quit
   if (process.env.RECITEFLOW_SELFTEST) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {

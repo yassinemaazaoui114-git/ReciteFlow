@@ -43,11 +43,35 @@ body { overflow: hidden; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s6); }
 .bar .picker { flex: 0 1 300px; }
 .bar .grow { flex: 1; }
+/* Edit text and the main button stay together, on the right, when the bar wraps */
+.bar .end { display: flex; gap: var(--s3); margin-left: auto; }
 #settings-bar { margin-top: auto; }
 .bar .btn-go, .bar .btn-stop { min-width: 132px; }
+
+/* A phase change swaps the text box, the page and Settings: the one coming in rises a little and fades in. Words
+   are drawn into the page at once; only the page itself moves, and it is still by the time the first word arrives. */
+.app .field:not([hidden]), .page.reciting:not([hidden]), .settings:not([hidden]) {
+  animation: enter-up var(--t-enter) var(--ease-out);
+}
+@keyframes enter-up { from { opacity: 0; transform: translateY(6px); } }
 
 @media (max-width: 760px) {
   .app { padding: var(--s4); }
   .app .page.reciting { padding: var(--s5) var(--s6) var(--s4); }
   .sub .light { display: none; }
+  /* The mic picker gives up width first, so Start / Stop stays on its row */
+  .bar { column-gap: var(--s4); }
+  .bar .picker { flex: 1 1 160px; }
+}
+/* A short window: less air around the page, so the words keep most of the height */
+@media (max-height: 560px) {
+  .app { gap: var(--s2); padding-block: var(--s3); }
+  .sub { margin-top: 0; }
+  .app .page.reciting { padding: var(--s4) var(--s6) var(--s3); }
+  .reciting .tally { margin-top: var(--s3); padding-top: var(--s2); row-gap: 2px; }
+  .bar { row-gap: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app .field:not([hidden]), .page.reciting:not([hidden]), .settings:not([hidden]) { animation-name: fade-in; }
 }

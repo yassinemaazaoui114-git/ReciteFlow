@@ -82,6 +82,7 @@ function update() {
   edit.hidden = phase !== 'done'
   if (phase !== 'done') closeMenu()
   words.toggleAttribute('data-clickable', canCorrect())
+  wordStops()
   mic.disabled = !idle || !!dev.wav
   keep.disabled = !idle || !!dev.wav || !settingsRead || engine.history === null
   hide.disabled = !idle   // the beep can be switched any time
@@ -116,11 +117,43 @@ const canCorrect = () => phase === 'done' && finished?.rec_id != null
 let openPos = null   // the word whose menu is open
 let saving = false
 
-function closeMenu() {
+// back: the focus goes back to the word (closed with Esc, Tab or a choice)
+function closeMenu(back = false) {
+  const w = words.querySelector('[data-open]')
   menu.hidden = true
-  words.querySelector('[data-open]')?.removeAttribute('data-open')
+  w?.removeAttribute('data-open')
   openPos = null
+  if (back && w) w.focus()
 }
+
+// Keyboard: after a saved recitation one word is in the Tab order; the arrows move along the words, Enter or Space
+// opens its menu
+let wordAt = 0   // the word that takes the focus
+function wordStops() {
+  const ws = [...words.querySelectorAll('.w')]
+  if (!canCorrect()) return ws.forEach((w) => w.removeAttribute('tabindex'))
+  if (!ws.some((w) => +w.dataset.pos === wordAt)) wordAt = +(ws[0]?.dataset.pos ?? 0)
+  for (const w of ws) w.tabIndex = +w.dataset.pos === wordAt ? 0 : -1
+}
+function focusWord(w) {
+  wordAt = +w.dataset.pos
+  wordStops()
+  w.focus()
+}
+words.addEventListener('keydown', (e) => {
+  const w = e.target.closest('.w')
+  if (!w || !canCorrect() || e.ctrlKey || e.altKey) return
+  const ws = [...words.querySelectorAll('.w')]
+  const i = ws.indexOf(w)
+  const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ws.length - 1 }[e.key]
+  if (to !== undefined) {
+    e.preventDefault()
+    focusWord(ws[Math.max(0, Math.min(ws.length - 1, to))])
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    if (!saving) openMenu(w)
+  }
+})
 
 // The menu: what the app said, the allowed labels (a check mark on the current one), Undo when corrected
 const shade = (state) => (state === 'extra' || state === 'missed' ? 'wrong' : state)
@@ -178,6 +211,8 @@ async function correct(pos, state) {
   finished = { ...finished, tokens: res.tokens, counts: res.counts, result: res.result }
   drawWords(words, res.tokens)
   drawTally(tally, res.counts)
+  wordStops()
+  words.querySelector(`.w[data-pos="${pos}"]`)?.focus()
   showResult()
   showStatus('ok', `Saved #${finished.rec_id}: ${res.result.corrections} correction(s)`)
 }
@@ -186,6 +221,8 @@ words.addEventListener('click', (e) => {
   const w = e.target.closest('.w')
   if (!w || !canCorrect() || saving) return
   e.stopPropagation()
+  wordAt = +w.dataset.pos
+  wordStops()
   if (openPos === +w.dataset.pos) return closeMenu()
   openMenu(w)
 })
@@ -194,7 +231,7 @@ menu.addEventListener('click', (e) => {
   const el = e.target.closest('.menu-item')
   if (!el || saving) return
   const pos = openPos
-  closeMenu()
+  closeMenu(true)
   correct(pos, el.dataset.label === 'undo' ? null : el.dataset.label)
 })
 menu.addEventListener('keydown', (e) => {
@@ -202,7 +239,7 @@ menu.addEventListener('keydown', (e) => {
   const i = items.indexOf(document.activeElement)
   if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus() }
   if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus() }
-  if (e.key === 'Tab') { e.preventDefault(); closeMenu() }
+  if (e.key === 'Tab') { e.preventDefault(); closeMenu(true) }
 })
 document.addEventListener('click', () => { if (!menu.hidden) closeMenu() })
 scroll.addEventListener('scroll', () => { if (!menu.hidden) closeMenu() })
@@ -314,6 +351,7 @@ async function start() {
   if (!text) return showStatus('bad', 'Paste a text first.')
   phase = 'listening'
   drawn = null
+  wordAt = 0
   words.replaceChildren()
   drawTally(tally, {})
   audio.resume()   // on a key press or click, so the tone is allowed to play
@@ -351,7 +389,7 @@ $('again').addEventListener('click', () => api.restartEngine())
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); start() }
   if (e.key === 'Escape') {
-    if (!menu.hidden) return closeMenu()
+    if (!menu.hidden) return closeMenu(true)
     if (settingsOpen) return closeSettings()
     stop()
   }

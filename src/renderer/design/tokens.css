@@ -41,6 +41,7 @@
   --t-hover: 150ms;
   --t-pop: 160ms;
   --t-pop-out: 110ms;
+  --t-enter: 180ms;   /* a screen or a message coming in; nothing waits for it */
 
   color-scheme: light;
 

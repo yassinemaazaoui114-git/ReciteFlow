@@ -81,8 +81,9 @@ body {
 .seg { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); }
 .seg button { height: 30px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent;
   color: var(--muted); font: 500 var(--text-sm) var(--font-ui); cursor: pointer;
-  transition: background-color var(--t-hover) ease, color var(--t-hover) ease; }
+  transition: background-color var(--t-hover) ease, color var(--t-hover) ease, transform var(--t-press) var(--ease-out); }
 .seg button:hover { color: var(--ink); }
+.seg button:active { transform: scale(0.96); }
 .seg button[aria-pressed='true'], .seg button[aria-checked='true'] { background: var(--ink); color: var(--bg); }
 
 /* The three dots of a button that is working ("Finishing...") */
@@ -147,10 +148,13 @@ body {
   border-radius: 50%;
   background: var(--knob);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-  transition: transform var(--t-pop) var(--ease-out);
+  transition: transform var(--t-pop) var(--ease-out), width var(--t-press) var(--ease-out);
 }
 .switch:checked { background: var(--switch-on); }
 .switch:checked::after { transform: translateX(16px); }
+/* Pressed: the knob stretches toward where it will go */
+.switch:active:not(:disabled)::after { width: 18px; }
+.switch:checked:active:not(:disabled)::after { transform: translateX(12px); }
 .switch:disabled { opacity: 0.5; }
 
 /* ---- Mic picker ---- */
@@ -259,6 +263,9 @@ body {
 .message p { margin: 0; flex: 1; }
 .message strong { font-weight: 600; }
 .message .btn { margin: -6px -6px -6px 0; }
+/* A message slides in from above, where it comes from */
+.message:not([hidden]) { animation: enter-down var(--t-enter) var(--ease-out); }
+@keyframes enter-down { from { opacity: 0; transform: translateY(-6px); } }
 .message[data-tone='bad'] { background: color-mix(in srgb, var(--mark-bad) 6%, var(--surface)); }
 .message[data-tone='wait'] { background: color-mix(in srgb, var(--mark-wait) 7%, var(--surface)); }
 .message[data-tone='ok'] { background: color-mix(in srgb, var(--mark-ok) 6%, var(--surface)); }
@@ -341,8 +348,9 @@ body {
 .w[data-underline] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
 /* Corrected by the user: tinted */
 .w[data-corrected] { background: var(--w-corrected-bg); box-shadow: 0 0 0 0.12em var(--w-corrected-bg); }
-/* Done phase: words can be clicked to correct them */
+/* Done phase: words can be clicked (or reached with the arrows) to correct them */
 .words[data-clickable] .w { cursor: pointer; }
+.words[data-clickable] .w:focus-visible { outline: 2px solid var(--ring); outline-offset: 0.12em; }
 .words[data-clickable] .w:hover { background: var(--surface-2); box-shadow: 0 0 0 0.12em var(--surface-2); }
 .words[data-clickable] .w[data-open] { background: var(--surface-2); box-shadow: 0 0 0 0.12em var(--surface-2), 0 0 0 calc(0.12em + 1px) var(--line-strong); }
 /* Hide mode: "…" after the last said word, gently alive while listening */
@@ -382,14 +390,20 @@ body {
   cursor: pointer;
 }
 .menu-item:hover, .menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.menu-item:active { background: var(--line); }
 .menu-item .tick { width: 16px; display: inline-grid; place-items: center; color: var(--ink); }
 .menu-item .tick .icon { width: 14px; height: 14px; stroke-width: 2.5; }
 .menu-item .why { color: var(--muted); }
 .menu-item i { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; flex: none; }
 .menu-sep { height: 1px; margin: 6px 4px; background: var(--line); }
 
+@keyframes fade-in { from { opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   .light::before, .more, .dots i { animation: none !important; }
+  .message:not([hidden]) { animation-name: fade-in; }
+  .seg button:active, .switch:active::after { transform: none; }
+  .switch:checked:active::after { transform: translateX(16px); }
   .menu, .menu[hidden] { transform: none; }
   .btn:active:not(:disabled) { transform: none; }
 }
