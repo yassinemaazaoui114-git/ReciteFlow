@@ -71,10 +71,13 @@
   --knob: #FFFFFF;
 
   /* Word states (R15 meaning, R18 hues): tuned for the white page, where the words and the counters are */
-  --w-correct: #15803D;
-  --w-misspelled: #A15C00;
-  --w-wrong: #DC2626;          /* also [missed] and {extra} */
-  --w-pending: #6B7489;
+  --w-correct: #12803C;
+  --w-misspelled: #7A4A00;
+  --w-wrong: #C81E1E;          /* also [missed] and {extra} */
+  --w-pending: #848C9E;        /* lighter than the rest so said words stand out */
+  /* A soft marker behind mistakes: on white, colour alone does not tell amber from red at a glance */
+  --w-misspelled-bg: #FDEBB0;
+  --w-wrong-bg: #FCE4E2;
   --w-corrected-bg: #EDF1FA;   /* a word the user corrected */
 
   /* Signals: status line, engine light, messages. Darker than the word colours: they sit on the waves */
@@ -117,6 +120,8 @@
     --w-misspelled: #F5B53F;
     --w-wrong: #FF7B73;
     --w-pending: #939FB6;
+    --w-misspelled-bg: transparent;
+    --w-wrong-bg: transparent;
     --w-corrected-bg: #26375E;
     --ok: #4CCB88;
     --wait: #F5B53F;
@@ -150,6 +155,8 @@
   --w-misspelled: #F5B53F;
   --w-wrong: #FF7B73;
   --w-pending: #939FB6;
+  --w-misspelled-bg: transparent;
+  --w-wrong-bg: transparent;
   --w-corrected-bg: #26375E;
   --ok: #4CCB88;
   --wait: #F5B53F;

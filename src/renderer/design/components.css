@@ -270,6 +270,11 @@ body {
 .tally [data-state='correct'] { color: var(--w-correct); }
 .tally [data-state='misspelled'] { color: var(--w-misspelled); }
 .tally [data-state='wrong'], .tally [data-state='missed'], .tally [data-state='extra'] { color: var(--w-wrong); }
+/* The counters are the legend: the same marker as the words */
+.tally [data-state='misspelled'] b { border-radius: 4px; background: var(--w-misspelled-bg); box-shadow: 0 0 0 3px var(--w-misspelled-bg); }
+.tally :is([data-state='wrong'], [data-state='missed'], [data-state='extra']) b {
+  border-radius: 4px; background: var(--w-wrong-bg); box-shadow: 0 0 0 3px var(--w-wrong-bg);
+}
 
 /* ---- The page: where the words are drawn. Its four corner brackets come from the app icon; they turn green
    while the app is listening. ---- */
@@ -310,8 +315,12 @@ body {
 /* A word's colour changes at once: never a transition here (latency is rule 1) */
 .w { border-radius: 4px; }
 .w[data-state='correct'] { color: var(--w-correct); }
-.w[data-state='misspelled'] { color: var(--w-misspelled); }
-.w[data-state='wrong'], .w[data-state='missed'], .w[data-state='extra'] { color: var(--w-wrong); }
+.w[data-state='misspelled'] {
+  color: var(--w-misspelled); background: var(--w-misspelled-bg); box-shadow: 0 0 0 0.12em var(--w-misspelled-bg);
+}
+.w[data-state='wrong'], .w[data-state='missed'], .w[data-state='extra'] {
+  color: var(--w-wrong); background: var(--w-wrong-bg); box-shadow: 0 0 0 0.12em var(--w-wrong-bg);
+}
 .w[data-state='pending'] { color: var(--w-pending); }
 .w[data-state='not_said'] { color: var(--w-pending); text-decoration: line-through; text-decoration-thickness: 1.5px; }
 /* Recovered: said wrong, then re-recited right: stays red, underlined */
