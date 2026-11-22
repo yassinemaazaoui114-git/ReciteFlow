@@ -72,6 +72,18 @@ body {
 .btn-quiet { background: transparent; color: var(--ink); border-color: var(--line-strong); }
 .btn-quiet:hover:not(:disabled) { background: var(--surface-2); }
 .btn-small { height: 32px; padding: 0 var(--s3); font-size: var(--text-sm); }
+/* Settings: a round icon-only button, quiet until hovered */
+.btn-icon { width: 36px; height: 36px; padding: 0; background: transparent; color: var(--muted); }
+.btn-icon:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.btn-icon .icon { width: 18px; height: 18px; }
+
+/* ---- Segmented choice (theme): the picked one is filled with ink ---- */
+.seg { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); }
+.seg button { height: 30px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent;
+  color: var(--muted); font: 500 var(--text-sm) var(--font-ui); cursor: pointer;
+  transition: background-color var(--t-hover) ease, color var(--t-hover) ease; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed='true'], .seg button[aria-checked='true'] { background: var(--ink); color: var(--bg); }
 
 /* The three dots of a button that is working ("Finishing...") */
 .dots { display: inline-flex; gap: 3px; }

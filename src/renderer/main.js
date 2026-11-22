@@ -1,7 +1,8 @@
 // The window: the text screen (paste a text, pick the mic and options, Start), the engine's status, and the
 // recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
 // it is done, the whole text, the result line, Recite again and Edit text; after a saved recitation a click on a word
-// opens the menu to correct the app.
+// opens the menu to correct the app. The settings button (top right) opens Settings (the theme) in the text box's
+// place, when not reciting.
 import { LABELS, drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
@@ -18,11 +19,14 @@ const words = $('words')
 const tally = $('tally')
 const edit = $('edit')
 const menu = $('menu')
+const settings = $('settings')
+const themes = [...document.querySelectorAll('[data-theme-pick]')]
 
 let phase = 'edit'
 let engine = { status: 'starting' }
 let dev = { text: null, wav: null }    // dev replay (RECITEFLOW_FILE / RECITEFLOW_WAV)
 let settingsRead = false               // keep is only offered once its remembered value is known
+let settingsOpen = false
 
 const loaded = () => engine.status === 'ready'
 
@@ -66,8 +70,14 @@ function update() {
   }[phase]
   go.disabled = idle ? !loaded() : phase === 'finishing'
   box.readOnly = phase !== 'edit'
-  box.hidden = phase !== 'edit'
-  page.hidden = phase === 'edit'
+  if (!idle) settingsOpen = false   // an engine restart or a start never leaves Settings over a recitation
+  box.hidden = phase !== 'edit' || settingsOpen
+  page.hidden = phase === 'edit' || settingsOpen
+  settings.hidden = !settingsOpen
+  $('options').hidden = $('actions').hidden = settingsOpen
+  $('settings-bar').hidden = !settingsOpen
+  $('open-settings').disabled = !idle
+  $('open-settings').toggleAttribute('aria-pressed', settingsOpen)
   page.dataset.phase = phase
   edit.hidden = phase !== 'done'
   if (phase !== 'done') closeMenu()
@@ -75,6 +85,7 @@ function update() {
   mic.disabled = !idle || !!dev.wav
   keep.disabled = !idle || !!dev.wav || !settingsRead || engine.history === null
   hide.disabled = !idle   // the beep can be switched any time
+  if (settingsOpen) return void ($('hint').innerHTML = `Changes apply at once. ${kbd('Esc')} to go back.`)
   if (phase === 'done') return showResult()
   $('hint').innerHTML = {
     edit: `Paste the text you want to recite, then press Start ${kbd('Ctrl+Enter')}`,
@@ -251,9 +262,54 @@ keep.addEventListener('change', async () => {
 beep.addEventListener('change', update)
 hide.addEventListener('change', update)
 
+// ---- Settings: the theme, applied by the main process at once and kept for the next start ----
+function showTheme(theme) {
+  for (const b of themes) {
+    b.setAttribute('aria-checked', String(b.dataset.themePick === theme))
+    b.tabIndex = b.dataset.themePick === theme ? 0 : -1
+  }
+}
+async function pickTheme(theme) {
+  showTheme(theme)
+  const res = await api.setTheme(theme)
+  if (res.error) {
+    showStatus('bad', res.error)
+    showTheme((await api.getTheme()).theme)
+  }
+}
+function openSettings() {
+  if (phase !== 'edit' && phase !== 'done') return
+  closeMenu()
+  settingsOpen = true
+  update()
+  themes.find((b) => b.tabIndex === 0)?.focus()
+}
+function closeSettings() {
+  if (!settingsOpen) return
+  settingsOpen = false
+  update()
+  if (phase === 'edit') box.focus()
+  else $('open-settings').focus()
+}
+for (const b of themes) b.addEventListener('click', () => pickTheme(b.dataset.themePick))
+// A radio group: the arrows move the choice, Tab leaves the group
+$('theme').addEventListener('keydown', (e) => {
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]
+  if (!step) return
+  e.preventDefault()
+  const next = themes[(themes.indexOf(document.activeElement) + step + themes.length) % themes.length]
+  next.focus()
+  pickTheme(next.dataset.themePick)
+})
+$('open-settings').addEventListener('click', (e) => {
+  e.stopPropagation()
+  settingsOpen ? closeSettings() : openSettings()
+})
+$('close-settings').addEventListener('click', closeSettings)
+
 // ---- Start / Stop ----
 async function start() {
-  if ((phase !== 'edit' && phase !== 'done') || !loaded()) return
+  if ((phase !== 'edit' && phase !== 'done') || !loaded() || settingsOpen) return
   const text = box.value.trim()
   if (!text) return showStatus('bad', 'Paste a text first.')
   phase = 'listening'
@@ -296,6 +352,7 @@ document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); start() }
   if (e.key === 'Escape') {
     if (!menu.hidden) return closeMenu()
+    if (settingsOpen) return closeSettings()
     stop()
   }
 })
@@ -361,6 +418,7 @@ api.onError((err) => {
 })
 
 dev = await api.devOptions()
+showTheme((await api.getTheme()).theme)
 if (dev.text) box.value = dev.text
 api.onEngineStatus(showEngine)
 showEngine(await api.engineStatus())

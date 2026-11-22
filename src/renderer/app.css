@@ -1,7 +1,7 @@
 /* The window's layout. Parts and colours come from design/. */
 
 html, body { height: 100%; }
-.message[hidden], .btn[hidden] { display: none; }
+.message[hidden], .btn[hidden], .bar[hidden], .settings[hidden] { display: none; }
 body { overflow: hidden; }
 
 .app {
@@ -15,6 +15,7 @@ body { overflow: hidden; }
 }
 
 .top { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); }
+.top-right { display: flex; align-items: center; gap: var(--s3); min-width: 0; margin-right: calc(-1 * var(--s2)); }
 .top .status { min-width: 0; text-align: right; }
 
 .sub { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); margin-top: calc(-1 * var(--s2)); }
@@ -31,9 +32,18 @@ body { overflow: hidden; }
 .reciting .scroll { flex: 1; min-height: 0; overflow-y: auto; scroll-padding-block: calc(var(--read-live) * 2); }
 .reciting .tally { flex: none; }
 
+/* Settings: in the text box's place, as tall as its rows; Back stays at the bottom */
+.settings { flex: none; max-height: 100%; margin-top: var(--s1); padding: var(--s6) var(--s8);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow-y: auto; }
+.settings-title { margin: 0 0 var(--s4); font: 600 var(--text-xl) / 1.2 var(--font-read-display); color: var(--ink); }
+.setting { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3) var(--s6);
+  padding: var(--s4) 0; border-top: 1px solid var(--line); }
+.setting-name { margin: 0 0 2px; font: 600 var(--text-md) / 1.3 var(--font-ui); color: var(--ink); }
+
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s6); }
 .bar .picker { flex: 0 1 300px; }
 .bar .grow { flex: 1; }
+#settings-bar { margin-top: auto; }
 .bar .btn-go, .bar .btn-stop { min-width: 132px; }
 
 @media (max-width: 760px) {

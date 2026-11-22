@@ -9,6 +9,8 @@ import { Engine } from './engine'
 if (process.env.RECITEFLOW_SELFTEST && !process.env.RECITEFLOW_DB) {
   process.env.RECITEFLOW_DB = join(tmpdir(), 'reciteflow-selftest', 'history.db')
 }
+// ...and never touch the window's own settings either
+if (process.env.RECITEFLOW_SELFTEST) app.setPath('userData', join(tmpdir(), 'reciteflow-selftest', 'userdata'))
 // The corrections check saves its replay (into that temporary history), so it can be corrected
 if (process.env.RECITEFLOW_SELFTEST === 'correct') process.env.RECITEFLOW_SAVE_REPLAY = '1'
 const engine = new Engine(join(app.getAppPath(), 'engine'))
@@ -34,6 +36,32 @@ function devOptions() {
     try { text = readFileSync(resolve(file), 'utf8').replace(/^﻿/, '') } catch { console.log('[reciteflow] cannot read', file) }
   }
   return { text, wav: wav ? resolve(wav) : null }
+}
+
+// The window's own settings (the theme), in the app's user folder. The engine keeps its own (keep_audio).
+const THEMES = ['system', 'light', 'dark']
+const windowSettingsFile = () => join(app.getPath('userData'), 'window-settings.json')
+function readTheme() {
+  try {
+    const theme = JSON.parse(readFileSync(windowSettingsFile(), 'utf8')).theme
+    return THEMES.includes(theme) ? theme : 'system'
+  } catch { return 'system' }
+}
+// The page follows prefers-color-scheme, which Electron sets from themeSource: one switch for the whole window
+function applyTheme(theme) {
+  nativeTheme.themeSource = theme
+  for (const w of BrowserWindow.getAllWindows()) w.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#0D1424' : '#F8FAFC')
+}
+function saveTheme(theme) {
+  if (!THEMES.includes(theme)) return { error: 'Unknown theme.' }
+  applyTheme(theme)
+  try {
+    mkdirSync(app.getPath('userData'), { recursive: true })
+    writeFileSync(windowSettingsFile(), JSON.stringify({ theme }), 'utf8')
+  } catch {
+    return { error: 'Could not save the theme.' }
+  }
+  return { theme }
 }
 
 async function systemInfo() {
@@ -103,6 +131,9 @@ function openDesignSheet() {
 
 app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_PAGE === 'design') return openDesignSheet()
+  applyTheme(readTheme())
+  ipcMain.handle('theme-get', () => ({ theme: readTheme() }))
+  ipcMain.handle('theme-set', (_e, theme) => saveTheme(theme))
   const info = systemInfo()
   ipcMain.handle('system-info', () => info)
   ipcMain.handle('dev-options', () => devOptions())
@@ -125,6 +156,8 @@ app.whenReady().then(async () => {
   win.on('closed', () => { engine.off('status', send); engine.off('event', forward) })
   engine.on('status', (s) => console.log('[reciteflow] engine:', s.status, s.gpu || '',
     s.loadSeconds != null ? `model loaded in ${s.loadSeconds} s` : '', s.message || ''))
+  // the settings check needs no engine (and no GPU)
+  if (process.env.RECITEFLOW_SELFTEST?.startsWith('settings')) return (await import('./selftest-settings')).run(win)
   engine.start()
   console.log('[reciteflow] system info:', await info)
   // RECITEFLOW_SELFTEST=engine: the engine check (src/main/selftest.js)

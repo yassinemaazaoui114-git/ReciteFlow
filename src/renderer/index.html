@@ -18,12 +18,17 @@
       <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.5 2.5l3 3L6 13H3v-3z" /></symbol>
       <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" /></symbol>
       <symbol id="i-cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></symbol>
+      <symbol id="i-gear" viewBox="0 0 16 16"><path d="M2 4.5h7M12.5 4.5H14M2 11.5h1.5M7 11.5h7" /><circle cx="10.75" cy="4.5" r="1.75" /><circle cx="5.25" cy="11.5" r="1.75" /></symbol>
+      <symbol id="i-back" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" /></symbol>
     </svg>
 
     <main class="app">
       <header class="top">
         <h1 class="title">ReciteFlow</h1>
-        <span class="status" id="status" role="status"></span>
+        <div class="top-right">
+          <span class="status" id="status" role="status"></span>
+          <button class="btn btn-icon" id="open-settings" aria-label="Settings" title="Settings"><svg class="icon"><use href="#i-gear" /></svg></button>
+        </div>
       </header>
       <div class="sub">
         <p class="hint" id="hint"></p>
@@ -47,12 +52,26 @@
         <ul class="tally" id="tally" aria-label="Counters"></ul>
         <div class="menu" id="menu" role="menu" aria-label="Correct this word" hidden></div>
       </section>
+      <section class="settings" id="settings" aria-labelledby="settings-title" hidden>
+        <h2 class="settings-title" id="settings-title">Settings</h2>
+        <div class="setting">
+          <div>
+            <p class="setting-name" id="theme-name">Theme</p>
+            <p class="hint">Windows follows the light or dark mode set in Windows.</p>
+          </div>
+          <div class="seg" id="theme" role="radiogroup" aria-labelledby="theme-name">
+            <button role="radio" data-theme-pick="system">Windows</button>
+            <button role="radio" data-theme-pick="light">Light</button>
+            <button role="radio" data-theme-pick="dark">Dark</button>
+          </div>
+        </div>
+      </section>
 
-      <div class="bar">
+      <div class="bar" id="options">
         <label class="option"><input type="checkbox" class="switch" id="hide" checked /> Hide the text while I recite</label>
         <label class="option"><input type="checkbox" class="switch" id="beep" checked /> Beep on a mistake</label>
       </div>
-      <div class="bar">
+      <div class="bar" id="actions">
         <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
           <select id="mic" aria-label="Microphone"><option value="">Default microphone</option></select>
           <svg class="icon"><use href="#i-down" /></svg></label>
@@ -60,6 +79,10 @@
         <span class="grow"></span>
         <button class="btn btn-quiet" id="edit" hidden><svg class="icon"><use href="#i-edit" /></svg>Edit text</button>
         <button class="btn btn-go" id="go" disabled><svg class="icon"><use href="#i-play" /></svg>Start</button>
+      </div>
+      <div class="bar" id="settings-bar" hidden>
+        <span class="grow"></span>
+        <button class="btn btn-quiet" id="close-settings"><svg class="icon"><use href="#i-back" /></svg>Back</button>
       </div>
     </main>
     <script type="module" src="./main.js"></script>
