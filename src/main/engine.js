@@ -17,7 +17,8 @@ function findPython() {
 }
 
 // Runs engine/server.py, keeps it running, and reports its status:
-// { status: 'starting' | 'loading' | 'ready' | 'error' | 'restarting' | 'stopped', gpu, loadSeconds, message }
+// { status: 'starting' | 'loading' | 'ready' | 'error' | 'restarting' | 'stopped', gpu, loadSeconds, message,
+//   history: its path, or null when it could not be opened }
 export class Engine extends EventEmitter {
   constructor(engineDir) {
     super()
@@ -146,7 +147,7 @@ export class Engine extends EventEmitter {
     const value = JSON.parse(data)
     if (event === 'state') {
       this._set({ status: value.state, gpu: value.gpu, loadSeconds: value.load_s,
-        message: value.state === 'error' ? value.error : null })
+        message: value.state === 'error' ? value.error : null, history: value.history })
     }
     this.emit('event', event, value)
   }

@@ -3,7 +3,10 @@ import { contextBridge, ipcRenderer } from 'electron'
 // The page has no Node access; it only gets these few named calls.
 contextBridge.exposeInMainWorld('reciteflow', {
   systemInfo: () => ipcRenderer.invoke('system-info'),
-  // Engine status: { status: 'starting' | 'loading' | 'ready' | 'error' | 'restarting' | 'stopped', gpu, loadSeconds, message }
+  // Dev replay (RECITEFLOW_FILE / RECITEFLOW_WAV): { text: for the box, or null; wav: replay path, or null }
+  devOptions: () => ipcRenderer.invoke('dev-options'),
+  // Engine status: { status: 'starting' | 'loading' | 'ready' | 'error' | 'restarting' | 'stopped', gpu, loadSeconds,
+  //   message, history: its path, or null when it could not be opened }
   engineStatus: () => ipcRenderer.invoke('engine-status'),
   restartEngine: () => ipcRenderer.invoke('engine-restart'),
   onEngineStatus: (fn) => ipcRenderer.on('engine-status', (_event, status) => fn(status)),

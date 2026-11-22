@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { execFile } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { Engine } from './engine'
 
 // Self-tests never touch the real history: the engine gets a temporary one
@@ -20,6 +20,18 @@ function firstLine(cmd, args) {
       resolve(text.split(/\r?\n/)[0] || null)
     })
   })
+}
+
+// Dev replay, as the old --file / --wav: RECITEFLOW_FILE = a UTF-8 text put in the box, RECITEFLOW_WAV = a recording
+// replayed in real time instead of the microphone (saved only with RECITEFLOW_SAVE_REPLAY=1).
+function devOptions() {
+  const file = process.env.RECITEFLOW_FILE
+  const wav = process.env.RECITEFLOW_WAV
+  let text = null
+  if (file) {
+    try { text = readFileSync(resolve(file), 'utf8').replace(/^﻿/, '') } catch { console.log('[reciteflow] cannot read', file) }
+  }
+  return { text, wav: wav ? resolve(wav) : null }
 }
 
 async function systemInfo() {
@@ -46,7 +58,7 @@ function createWindow() {
     title: 'ReciteFlow',
     icon: join(app.getAppPath(), 'build', 'icon.ico'),
     show: false,
-    backgroundColor: '#0B1220',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0D1424' : '#F8FAFC',
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -91,6 +103,7 @@ app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_PAGE === 'design') return openDesignSheet()
   const info = systemInfo()
   ipcMain.handle('system-info', () => info)
+  ipcMain.handle('dev-options', () => devOptions())
   ipcMain.handle('engine-status', () => engine.status)
   ipcMain.handle('engine-restart', () => engine.restart())
   // Recitation: each call answers the engine's JSON or { error }
@@ -114,6 +127,8 @@ app.whenReady().then(async () => {
   console.log('[reciteflow] system info:', await info)
   // RECITEFLOW_SELFTEST=engine: the engine check (src/main/selftest.js)
   if (process.env.RECITEFLOW_SELFTEST === 'engine') return (await import('./selftest')).run(win, engine)
+  // RECITEFLOW_SELFTEST=text: the text screen check (src/main/selftest-text.js)
+  if (process.env.RECITEFLOW_SELFTEST === 'text') return (await import('./selftest-text')).run(win, engine)
   // RECITEFLOW_SELFTEST=1: print what the page shows, save a picture of it in test_out/, then quit
   if (process.env.RECITEFLOW_SELFTEST) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
