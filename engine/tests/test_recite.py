@@ -1,0 +1,43 @@
+"""recite.py: ready-to-draw tokens, the done line numbers and corrections, on a temporary history (no GPU)."""
+
+from core import DisplayWord
+from core.history import History, token_list
+from recite import HISTORY_DB, Engine, draw_tokens, result
+
+
+def _words():
+    return [DisplayWord("The", "correct"), DisplayWord("cat", "wrong", extras_before=["um"]),
+            DisplayWord("sat", "pending")]
+
+
+SUMMARY = {"words": 3, "correct": 1, "misspelled": 0, "wrong": 1, "missed": 0, "extra": 1, "pending": 1,
+           "total_s": 2.0}
+
+
+def test_history_path():
+    assert HISTORY_DB.parts[-3:] == ("ReciteFlow", "data", "history.db")
+
+
+def test_draw_tokens_and_result():
+    toks = token_list(_words(), [])
+    drawn = draw_tokens(toks, {2})
+    assert [(t["text"], t["state"], t["sep"]) for t in drawn] == [
+        ("The", "correct", " "), ("{um}", "extra", " "), ("cat", "wrong", " "), ("sat", "pending", "\n")]
+    assert drawn[1]["labels"] == ["extra", "not_said"]
+    assert result(SUMMARY, toks) == {"correct": 1, "total": 3, "said": 2, "extras": ["um"], "fixed": 0,
+                                     "corrections": 0}
+
+
+def test_correct_saves_and_updates_the_counts(tmp_path):
+    history = History(tmp_path / "h.db")
+    rec_id = history.save(text="The cat sat", words=_words(), tail=[], summary=SUMMARY)
+    engine = Engine(lambda *a: None, history=history)
+    engine.toks, engine.summary, engine.rec_id, engine.breaks = token_list(_words(), []), SUMMARY, rec_id, set()
+    out = engine.correct(2, "correct")  # "cat" was said right
+    assert out["counts"]["correct"] == 2 and out["counts"]["wrong"] == 0
+    assert out["tokens"][2]["corrected"] and out["result"]["corrections"] == 1
+    out = engine.correct(1, "not_said")  # the app invented "um"
+    assert out["result"]["extras"] == [] and out["counts"]["extra"] == 0
+    assert [t.user_state for t in history.tokens(rec_id)] == [None, "not_said", "correct", None]
+    out = engine.correct(2, None)  # undo
+    assert out["counts"]["wrong"] == 1 and not out["tokens"][2]["corrected"]

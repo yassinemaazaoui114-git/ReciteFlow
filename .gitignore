@@ -1,0 +1,20 @@
+node_modules/
+out/
+dist/
+test_out/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# audio, history, models (never in git)
+*.wav
+*.mp3
+*.db
+data/
+clips/
+*.onnx
+
+# secrets
+.env
+*.key
+

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>ReciteFlow</title>
+    <style>
+      body { margin: 0; padding: 32px; background: #0B1220; color: #E2E8F0; font: 14px 'Segoe UI', sans-serif; }
+      h1 { margin: 0 0 16px; font-size: 22px; }
+      dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; color: #8B98AD; }
+      dd { margin: 0; color: #E2E8F0; }
+      #engine { color: #FACC15; }
+      #engine[data-status='ready'] { color: #14B8A6; }
+      #engine[data-status='error'], #engine[data-status='stopped'], #engine[data-status='restarting'] { color: #EF4444; }
+      button { font: inherit; color: #0B1220; background: #14B8A6; border: 0; border-radius: 6px; padding: 6px 14px; }
+    </style>
+  </head>
+  <body>
+    <h1>ReciteFlow</h1>
+    <p id="engine">Starting the engine...</p>
+    <button id="again" hidden>Start again</button>
+    <p id="node">Node in the page: checking...</p>
+    <dl id="info"></dl>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
