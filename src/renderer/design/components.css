@@ -97,8 +97,8 @@ body {
 }
 .field::placeholder { color: var(--w-pending); }
 .field:hover { border-color: var(--line-strong); }
-.field:focus { outline: none; border-color: var(--ink-2); }
-.field:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* Typing in the box needs no blue ring: a darker border is enough to show where the cursor is */
+.field:focus, .field:focus-visible { outline: none; border-color: var(--line-strong); }
 .field[readonly] { color: var(--ink-2); }
 
 /* ---- Switches (hide, beep, keep) ---- */
