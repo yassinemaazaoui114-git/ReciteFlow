@@ -1,0 +1,372 @@
+/* ReciteFlow components. Every colour comes from tokens.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(color-mix(in srgb, var(--bg) var(--bg-wash), transparent) 0 0),
+    var(--bg-image) center / cover no-repeat fixed, var(--bg);
+  color: var(--ink);
+  font: 400 var(--text-md) / 1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+.icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; }
+.icon-fill { fill: currentColor; stroke: none; }
+
+/* Window title: the word mark */
+.title {
+  margin: 0;
+  font: 600 var(--text-xl) / 1.2 var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Hint line (under the title) */
+.hint { margin: 0; color: var(--muted); font-size: var(--text-sm); }
+
+.kbd {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  font: 500 var(--text-xs) / 18px var(--font-ui);
+  color: var(--ink-2);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  height: var(--control-h);
+  padding: 0 var(--s5);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font: 600 var(--text-md) / 1 var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease,
+    border-color var(--t-hover) ease, color var(--t-hover) ease;
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { cursor: default; opacity: 0.55; }
+.btn .icon { width: 15px; height: 15px; }
+
+/* Start / Recite again: the brand's green pill with a play triangle */
+.btn-go { background: var(--go); color: var(--on-go); padding-left: var(--s4); }
+.btn-go:hover:not(:disabled) { background: var(--go-hover); }
+/* Stop / Finishing... */
+.btn-stop { background: var(--stop); color: var(--on-stop); padding-left: var(--s4); }
+.btn-stop:hover:not(:disabled) { background: var(--stop-hover); }
+.btn-stop:disabled { opacity: 0.72; }
+/* Edit text, Start again */
+.btn-quiet { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn-quiet:hover:not(:disabled) { background: var(--surface-2); }
+.btn-small { height: 32px; padding: 0 var(--s3); font-size: var(--text-sm); }
+
+/* The three dots of a button that is working ("Finishing...") */
+.dots { display: inline-flex; gap: 3px; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: 0.15s; }
+.dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+/* ---- Text box (phase edit): the text is set in the same reading face as the word view ---- */
+.field {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  padding: var(--s5) var(--s6);
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 var(--read-edit) / 1.65 var(--font-read);
+  box-shadow: var(--shadow-page);
+  transition: border-color var(--t-hover) ease;
+}
+.field::placeholder { color: var(--w-pending); }
+.field:hover { border-color: var(--line-strong); }
+.field:focus { outline: none; border-color: var(--ink-2); }
+.field:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.field[readonly] { color: var(--ink-2); }
+
+/* ---- Switches (hide, beep, keep) ---- */
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 32px;
+  font-size: var(--text-md);
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+.option:has(:disabled) { color: var(--muted); cursor: default; }
+.switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  cursor: inherit;
+  transition: background-color var(--t-hover) ease;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform var(--t-pop) var(--ease-out);
+}
+.switch:checked { background: var(--switch-on); }
+.switch:checked::after { transform: translateX(16px); }
+.switch:disabled { opacity: 0.5; }
+
+/* ---- Mic picker ---- */
+.picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 320px;
+  color: var(--ink);
+}
+.picker > .icon { position: absolute; left: 14px; pointer-events: none; color: var(--muted); }
+.picker > .icon:last-child { left: auto; right: 12px; width: 14px; height: 14px; }
+.picker select {
+  appearance: none;
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 36px 0 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: inherit;
+  font: 500 var(--text-md) / 1 var(--font-ui);
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color var(--t-hover) ease, background-color var(--t-hover) ease;
+}
+.picker select:hover:not(:disabled) { background: var(--surface-2); }
+.picker select:disabled { color: var(--muted); cursor: default; opacity: 0.6; }
+
+/* ---- Status marks (brand board: check, cross, "!", dot) ---- */
+.mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font: 700 12px / 1 var(--font-ui);
+}
+.mark .icon { width: 11px; height: 11px; stroke-width: 3; }
+.mark-ok { background: var(--mark-ok); }
+.mark-bad { background: var(--mark-bad); }
+.mark-wait { background: var(--mark-wait); color: #1E2A44; }
+.mark-idle { width: 10px; height: 10px; margin: 4px; background: var(--mark-idle); }
+
+/* ---- Status line (top right) ---- */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font: 500 var(--text-md) / 1.3 var(--font-ui);
+  color: var(--ink-2);
+}
+.status[data-tone='wait'] { color: var(--wait); }
+.status[data-tone='ok'] { color: var(--ok); }
+.status[data-tone='bad'] { color: var(--bad); }
+.status[data-tone='live'] { color: var(--ok); }
+.status .note-quiet { color: var(--muted); font-weight: 400; }
+
+/* ---- Engine light: a dot + plain words ---- */
+.light {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.light::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mark-idle);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark-idle) 22%, transparent);
+}
+.light[data-state='loading']::before, .light[data-state='restarting']::before {
+  background: var(--mark-wait);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark-wait) 25%, transparent);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+.light[data-state='ready']::before {
+  background: var(--mark-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark-ok) 25%, transparent);
+}
+.light[data-state='error']::before, .light[data-state='stopped']::before {
+  background: var(--mark-bad);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mark-bad) 25%, transparent);
+}
+@keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ---- Messages (engine errors, a failed save, "Paste a text first.") ---- */
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-md);
+}
+.message > .mark { margin-top: 1px; }
+.message p { margin: 0; flex: 1; }
+.message strong { font-weight: 600; }
+.message .btn { margin: -6px -6px -6px 0; }
+.message[data-tone='bad'] { background: color-mix(in srgb, var(--mark-bad) 6%, var(--surface)); }
+.message[data-tone='wait'] { background: color-mix(in srgb, var(--mark-wait) 7%, var(--surface)); }
+.message[data-tone='ok'] { background: color-mix(in srgb, var(--mark-ok) 6%, var(--surface)); }
+
+/* ---- Counters = the legend: each one written in its own colour and notation ---- */
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 500 var(--text-md) / 1.3 var(--font-ui);
+}
+.page .tally { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.tally li { display: inline-flex; align-items: baseline; gap: 6px; color: var(--w-pending); }
+.tally b {
+  font: 650 var(--text-lg) / 1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+.tally [data-state='correct'] { color: var(--w-correct); }
+.tally [data-state='misspelled'] { color: var(--w-misspelled); }
+.tally [data-state='wrong'], .tally [data-state='missed'], .tally [data-state='extra'] { color: var(--w-wrong); }
+
+/* ---- The page: where the words are drawn. Its four corner brackets come from the app icon; they turn green
+   while the app is listening. ---- */
+.page {
+  position: relative;
+  padding: var(--s8) var(--s10);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-page);
+  --bracket: var(--line-strong);
+}
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
+  background: var(--bracket);
+  --a: 18px; --b: 2px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top left / var(--a) var(--b), linear-gradient(#000 0 0) top left / var(--b) var(--a),
+    linear-gradient(#000 0 0) top right / var(--a) var(--b), linear-gradient(#000 0 0) top right / var(--b) var(--a),
+    linear-gradient(#000 0 0) bottom left / var(--a) var(--b), linear-gradient(#000 0 0) bottom left / var(--b) var(--a),
+    linear-gradient(#000 0 0) bottom right / var(--a) var(--b), linear-gradient(#000 0 0) bottom right / var(--b) var(--a);
+  -webkit-mask-repeat: no-repeat;
+  transition: background-color 240ms ease;
+}
+.page[data-phase='listening'] { --bracket: var(--listen); }
+.page[data-phase='finishing'] { --bracket: var(--mark-wait); }
+
+/* ---- Word view ---- */
+.words {
+  margin: 0;
+  font: 400 var(--read-live) / var(--read-leading) var(--font-read);
+  color: var(--w-pending);
+  white-space: pre-wrap;           /* separators carry the pasted line breaks */
+  overflow-wrap: anywhere;
+}
+/* A word's colour changes at once: never a transition here (latency is rule 1) */
+.w { border-radius: 4px; }
+.w[data-state='correct'] { color: var(--w-correct); }
+.w[data-state='misspelled'] { color: var(--w-misspelled); }
+.w[data-state='wrong'], .w[data-state='missed'], .w[data-state='extra'] { color: var(--w-wrong); }
+.w[data-state='pending'] { color: var(--w-pending); }
+.w[data-state='not_said'] { color: var(--w-pending); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+/* Recovered: said wrong, then re-recited right: stays red, underlined */
+.w[data-underline] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+/* Corrected by the user: tinted */
+.w[data-corrected] { background: var(--w-corrected-bg); box-shadow: 0 0 0 0.12em var(--w-corrected-bg); }
+/* Done phase: words can be clicked to correct them */
+.words[data-clickable] .w { cursor: pointer; }
+.words[data-clickable] .w:hover { background: var(--surface-2); box-shadow: 0 0 0 0.12em var(--surface-2); }
+.words[data-clickable] .w[data-open] { background: var(--surface-2); box-shadow: 0 0 0 0.12em var(--surface-2), 0 0 0 calc(0.12em + 1px) var(--line-strong); }
+/* Hide mode: "…" after the last said word, gently alive while listening */
+.more { color: var(--w-pending); }
+.page[data-phase='listening'] .more { animation: breathe 1.6s ease-in-out infinite; }
+
+/* ---- Word menu (correct the app): opens from the clicked word ---- */
+.menu {
+  position: absolute;
+  z-index: 10;
+  min-width: 260px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  box-shadow: var(--shadow-pop);
+  font: 400 var(--text-md) / 1.3 var(--font-ui);
+  transform-origin: top left;
+  transition: opacity var(--t-pop) var(--ease-out), transform var(--t-pop) var(--ease-out);
+}
+.menu[hidden] { display: block; visibility: hidden; opacity: 0; transform: scale(0.96) translateY(-4px);
+  transition-duration: var(--t-pop-out); transition-property: opacity, transform, visibility; }
+.menu-said { padding: 6px 10px 8px; color: var(--muted); font-size: var(--text-sm); }
+.menu-said b { font-weight: 600; }
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover, .menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.menu-item .tick { width: 16px; display: inline-grid; place-items: center; color: var(--ink); }
+.menu-item .tick .icon { width: 14px; height: 14px; stroke-width: 2.5; }
+.menu-item .why { color: var(--muted); }
+.menu-item i { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; flex: none; }
+.menu-sep { height: 1px; margin: 6px 4px; background: var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+  .light::before, .more, .dots i { animation: none !important; }
+  .menu, .menu[hidden] { transform: none; }
+  .btn:active:not(:disabled) { transform: none; }
+}

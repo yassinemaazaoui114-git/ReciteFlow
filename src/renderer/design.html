@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>ReciteFlow design sheet</title>
+    <link rel="stylesheet" href="./design/tokens.css" />
+    <link rel="stylesheet" href="./design/components.css" />
+    <style>
+      /* Sheet layout only (not part of the design system) */
+      .sheet { max-width: 1040px; margin: 0 auto; padding: var(--s10) var(--s8) var(--s12); }
+      .sheet-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s6);
+        padding-bottom: var(--s6); border-bottom: 1px solid var(--line); }
+      .sheet-head h1 { margin: 0; font: 600 30px/1.1 var(--font-read-display); letter-spacing: -0.01em; }
+      .sheet-head p { margin: 6px 0 0; color: var(--muted); }
+      .seg { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); }
+      .seg button { height: 30px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent;
+        color: var(--muted); font: 500 var(--text-sm) var(--font-ui); cursor: pointer; }
+      .seg button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
+      section { display: grid; grid-template-columns: 180px 1fr; gap: var(--s8); padding: var(--s10) 0;
+        border-bottom: 1px solid var(--line); }
+      section > header { color: var(--muted); font-size: var(--text-sm); }
+      section > header b { display: block; color: var(--ink); font: 600 var(--text-lg)/1.3 var(--font-ui); margin-bottom: 4px; }
+      .stack { display: grid; gap: var(--s6); }
+      .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3) var(--s4); }
+      .cap { margin: 0 0 var(--s2); color: var(--muted); font-size: var(--text-xs); letter-spacing: 0.04em; text-transform: uppercase; }
+      .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s4) var(--s5); }
+      .swatch { display: grid; grid-template-columns: 28px 1fr; gap: 2px var(--s3); align-items: center; font-size: var(--text-sm); }
+      .swatch i { grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08); }
+      .swatch span { color: var(--muted); font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+      .type-row { display: grid; grid-template-columns: 150px 1fr; gap: var(--s4); align-items: baseline; }
+      .type-row small { color: var(--muted); font-size: var(--text-xs); }
+      /* A window put together from the parts */
+      .win { display: grid; gap: var(--s4); padding: var(--s6); border: 1px solid var(--line); border-radius: 14px;
+        background: linear-gradient(color-mix(in srgb, var(--bg) var(--bg-wash), transparent) 0 0),
+          var(--bg-image) center / cover no-repeat, var(--bg); }
+      .win-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); }
+      .win-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3) var(--s4); }
+      .win-bar .grow { flex: 1; }
+      .words-wrap { position: relative; }
+      .demo .page { min-height: 150px; }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="i-play" viewBox="0 0 16 16"><path class="icon-fill" d="M4.5 2.6v10.8c0 .8.9 1.3 1.6.9l8.3-5.4c.6-.4.6-1.3 0-1.7L6.1 1.7c-.7-.4-1.6.1-1.6.9Z" /></symbol>
+      <symbol id="i-stop" viewBox="0 0 16 16"><rect class="icon-fill" x="3" y="3" width="10" height="10" rx="2" /></symbol>
+      <symbol id="i-again" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4" /><path d="M2.5 1.8v3h3" /></symbol>
+      <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.5 2.5l3 3L6 13H3v-3z" /></symbol>
+      <symbol id="i-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5" /><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" /></symbol>
+      <symbol id="i-down" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" /></symbol>
+      <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" /></symbol>
+      <symbol id="i-cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></symbol>
+    </svg>
+
+    <main class="sheet">
+      <div class="sheet-head">
+        <div>
+          <h1>ReciteFlow design system</h1>
+          <p>Every part the window is built from, in both themes. In the app, the theme will be picked in Settings.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Theme">
+          <button data-theme-pick="system">Windows</button>
+          <button data-theme-pick="light">Light</button>
+          <button data-theme-pick="dark">Dark</button>
+        </div>
+      </div>
+
+      <section>
+        <header><b>Put together</b>How the parts sit in the window while reciting. Press Play to see words arrive.</header>
+        <div class="win demo">
+          <div class="win-top">
+            <h2 class="title">ReciteFlow</h2>
+            <span class="status" id="demo-status" data-tone="ok"><span class="mark mark-ok"><svg class="icon"><use href="#i-check" /></svg></span>Ready</span>
+          </div>
+          <p class="hint" id="demo-hint">Paste the text you want to recite, then press Start <span class="kbd">Ctrl+Enter</span></p>
+          <div class="page" id="demo-page" data-phase="edit"><p class="words" id="demo-words"></p>
+            <ul class="tally" id="demo-tally"></ul></div>
+          <div class="win-bar">
+            <label class="option"><input type="checkbox" class="switch" id="demo-hide" checked /> Hide the text while I recite</label>
+            <label class="option"><input type="checkbox" class="switch" checked /> Beep on a mistake</label>
+          </div>
+          <div class="win-bar">
+            <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
+              <select aria-label="Microphone"><option>Default microphone</option><option>Headset Microphone (USB Audio)</option></select>
+              <svg class="icon"><use href="#i-down" /></svg></label>
+            <label class="option"><input type="checkbox" class="switch" checked /> Keep my recordings for training</label>
+            <span class="grow"></span>
+            <button class="btn btn-go" id="demo-play"><svg class="icon"><use href="#i-play" /></svg>Play</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Colour</b>Brand hues from the board. Word colours are those hues, tuned to read on the white page (contrast shown); status text uses darker shades because it sits on the background.</header>
+        <div class="stack">
+          <div><p class="cap">Brand</p><div class="swatches" id="sw-brand"></div></div>
+          <div><p class="cap">Surfaces and text</p><div class="swatches" id="sw-ui"></div></div>
+          <div><p class="cap">Words</p><div class="swatches" id="sw-words"></div></div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Type</b>Segoe UI Variable for the window, Sitka for the text you recite: it is built for long reading at any size.</header>
+        <div class="stack">
+          <div class="type-row"><small>Title 22 / 600</small><span class="title">ReciteFlow</span></div>
+          <div class="type-row"><small>Words 21 / Sitka</small><span class="words"><span class="w" data-state="correct">Say it back slowly</span></span></div>
+          <div class="type-row"><small>Text box 19 / Sitka</small><span style="font: var(--read-edit)/1.6 var(--font-read)">Paste the paragraph here.</span></div>
+          <div class="type-row"><small>Controls 14 / 600</small><span style="font-weight:600">Keep my recordings for training</span></div>
+          <div class="type-row"><small>Hint 13</small><span class="hint">A beep means a mistake. Esc to stop.</span></div>
+          <div class="type-row"><small>Counters 16 / tabular</small><ul class="tally"><li data-state="correct"><b>128</b> Correct</li><li data-state="wrong"><b>7</b> Wrong</li></ul></div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Buttons</b>Pills. Green starts, red stops, outlined for the rest. Pressing shrinks them a little.</header>
+        <div class="stack">
+          <div class="row">
+            <button class="btn btn-go"><svg class="icon"><use href="#i-play" /></svg>Start</button>
+            <button class="btn btn-go" disabled><svg class="icon"><use href="#i-play" /></svg>Start</button>
+            <button class="btn btn-stop"><svg class="icon"><use href="#i-stop" /></svg>Stop</button>
+            <button class="btn btn-stop" disabled>Finishing <span class="dots"><i></i><i></i><i></i></span></button>
+          </div>
+          <div class="row">
+            <button class="btn btn-go"><svg class="icon"><use href="#i-again" /></svg>Recite again</button>
+            <button class="btn btn-quiet"><svg class="icon"><use href="#i-edit" /></svg>Edit text</button>
+            <button class="btn btn-quiet btn-small">Start again</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Text and options</b>The text box uses the reading face, so the text looks the same before and while you recite.</header>
+        <div class="stack">
+          <textarea class="field" rows="4" placeholder="Paste the text you want to recite"></textarea>
+          <div class="row">
+            <label class="option"><input type="checkbox" class="switch" checked /> Hide the text while I recite</label>
+            <label class="option"><input type="checkbox" class="switch" /> Beep on a mistake</label>
+            <label class="option"><input type="checkbox" class="switch" checked disabled /> Keep my recordings for training</label>
+          </div>
+          <div class="row">
+            <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
+              <select aria-label="Microphone"><option>Default microphone</option><option>Microphone Array (Realtek(R) Audio)</option></select>
+              <svg class="icon"><use href="#i-down" /></svg></label>
+            <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
+              <select aria-label="Microphone (disabled)" disabled><option>Default microphone</option></select>
+              <svg class="icon"><use href="#i-down" /></svg></label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Status and messages</b>The status line (top right), the engine light, and messages in plain words.</header>
+        <div class="stack">
+          <div class="row">
+            <span class="status" data-tone="wait"><span class="mark mark-wait">!</span>Loading the speech model...</span>
+            <span class="status" data-tone="ok"><span class="mark mark-ok"><svg class="icon"><use href="#i-check" /></svg></span>Ready</span>
+            <span class="status" data-tone="live"><span class="light" data-state="ready"></span>Listening</span>
+            <span class="status" data-tone="bad"><span class="mark mark-bad"><svg class="icon"><use href="#i-cross" /></svg></span>Paste a text first.</span>
+          </div>
+          <div class="row">
+            <span class="status"><span class="mark mark-ok"><svg class="icon"><use href="#i-check" /></svg></span>Finished <span class="note-quiet">(saved #214 with the recording)</span></span>
+            <span class="status"><span class="mark mark-idle"></span>Stopped <span class="note-quiet">(not saved (replay))</span></span>
+          </div>
+          <div class="row">
+            <span class="light" data-state="loading">Speech model loading</span>
+            <span class="light" data-state="ready">Engine ready, GPU: RTX 4050</span>
+            <span class="light" data-state="restarting">Engine stopped. Starting it again...</span>
+            <span class="light" data-state="stopped">The engine keeps stopping</span>
+          </div>
+          <div class="message" data-tone="bad"><span class="mark mark-bad"><svg class="icon"><use href="#i-cross" /></svg></span>
+            <p><strong>The engine keeps stopping.</strong> It was restarted 3 times in a minute.</p>
+            <button class="btn btn-quiet btn-small">Start again</button></div>
+          <div class="message" data-tone="wait"><span class="mark mark-wait">!</span>
+            <p>History is off (could not open data/history.db). Recitations are not saved.</p></div>
+          <div class="message" data-tone="ok"><span class="mark mark-ok"><svg class="icon"><use href="#i-check" /></svg></span>
+            <p>Saved #214: 2 corrections.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <header><b>Words</b>Every colour and notation. Recovered words are underlined, corrected ones tinted. Click a word below to correct it.</header>
+        <div class="stack">
+          <div><p class="cap">Every state</p>
+            <div class="page"><p class="words" id="states"></p></div></div>
+          <div><p class="cap">Hide mode, while listening</p>
+            <div class="page" data-phase="listening"><p class="words" id="hidden"></p></div></div>
+          <div><p class="cap">Done: click a word</p>
+            <div class="words-wrap"><div class="page"><p class="words" id="done" data-clickable></p>
+              <ul class="tally" id="done-tally"></ul></div>
+              <div class="menu" id="menu" role="menu" hidden></div></div></div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./design.js"></script>
+  </body>
+</html>

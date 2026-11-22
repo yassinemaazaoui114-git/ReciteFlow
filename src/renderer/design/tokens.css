@@ -1,0 +1,158 @@
+/* ReciteFlow design tokens. Light and dark. The theme follows Windows unless <html data-theme>
+   is "light" or "dark". Word colours are the brand hues tuned so each
+   reads at 4.5:1 or more on the page it sits on. Components use only the semantic names below. */
+
+:root {
+  /* Brand (R17), as given */
+  --brand-navy: #1E2A44;
+  --brand-green: #27AE60;
+  --brand-red: #EF4444;
+  --brand-amber: #F59E0B;
+  --brand-grey: #9CA3AF;
+  --brand-paper: #F8FAFC;
+
+  /* Type: UI in Segoe UI Variable, the text being recited in Sitka (a Windows reading face, optical sizes) */
+  --font-ui: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Segoe UI Variable Display', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-read: 'Sitka Text', 'Sitka', Georgia, serif;
+  --font-read-display: 'Sitka Heading', 'Sitka', Georgia, serif;
+
+  --text-xs: 12px;    /* captions, kbd */
+  --text-sm: 13px;    /* hint line, menu details */
+  --text-md: 14px;    /* controls, labels, status */
+  --text-lg: 16px;    /* counters */
+  --text-xl: 22px;    /* window title */
+  --read-edit: 19px;  /* the text box */
+  --read-live: 21px;  /* the word view */
+  --read-leading: 1.75;
+
+  /* Space (4 px steps) and shape */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+  --control-h: 40px;
+
+  /* Motion: short and only on transform, opacity and colours of controls. A word's colour never animates. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --t-press: 140ms;
+  --t-hover: 150ms;
+  --t-pop: 160ms;
+  --t-pop-out: 110ms;
+
+  color-scheme: light;
+
+  /* Light theme (default) */
+  --bg: var(--brand-paper);
+  --bg-image: url('./bg-light.webp');  /* one background per theme */
+  --bg-wash: 35%;                       /* plain background laid over the waves so text on them stays readable */
+  --surface: #FFFFFF;          /* the page the words sit on */
+  --surface-2: #F1F4F9;        /* hover, wells */
+  --raised: #FFFFFF;           /* menus */
+  --line: #E1E6EE;
+  --line-strong: #C9D1DE;
+  --ink: var(--brand-navy);
+  --ink-2: #3A4762;
+  --muted: #5A6580;
+  --faint: #8A93A6;            /* decoration only, never text */
+  --ring: #3D6FE0;
+  --shadow-page: 0 1px 2px rgb(30 42 68 / 0.05), 0 8px 24px -12px rgb(30 42 68 / 0.12);
+  --shadow-pop: 0 2px 4px rgb(30 42 68 / 0.06), 0 16px 40px -12px rgb(30 42 68 / 0.28);
+
+  --go: #1C8148;               /* Start: brand green, deep enough for white text */
+  --go-hover: #176E3D;
+  --on-go: #FFFFFF;
+  --stop: #C62828;
+  --stop-hover: #A82020;
+  --on-stop: #FFFFFF;
+  --switch-on: var(--brand-navy);
+  --knob: #FFFFFF;
+
+  /* Word states (R15 meaning, R18 hues): tuned for the white page, where the words and the counters are */
+  --w-correct: #15803D;
+  --w-misspelled: #A15C00;
+  --w-wrong: #DC2626;          /* also [missed] and {extra} */
+  --w-pending: #6B7489;
+  --w-corrected-bg: #EDF1FA;   /* a word the user corrected */
+
+  /* Signals: status line, engine light, messages. Darker than the word colours: they sit on the waves */
+  --ok: #166B3A;
+  --wait: #8C4C05;
+  --bad: #B02424;
+  --idle: #58617A;
+  --mark-ok: var(--brand-green);
+  --mark-wait: var(--brand-amber);
+  --mark-bad: var(--brand-red);
+  --mark-idle: var(--brand-grey);
+  --listen: var(--brand-green); /* the page frame while listening */
+}
+
+/* Dark theme: navy night. Brand navy becomes the raised surface. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0D1424;
+    --bg-image: url('./bg-dark.webp');
+    --surface: #131C31;
+    --surface-2: #1A2540;
+    --raised: var(--brand-navy);
+    --line: #223050;
+    --line-strong: #31416A;
+    --ink: #E6EBF3;
+    --ink-2: #C3CCDB;
+    --muted: #94A1B8;
+    --faint: #5E6B85;
+    --ring: #7FA6FF;
+    --shadow-page: 0 0 0 1px rgb(0 0 0 / 0.2), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.3), 0 18px 44px -12px rgb(0 0 0 / 0.7);
+    --go: #1C8148;
+    --go-hover: #22975A;
+    --stop: #C62828;
+    --stop-hover: #DB3434;
+    --switch-on: #E6EBF3;
+    --knob: #131C31;
+    --w-correct: #4CCB88;
+    --w-misspelled: #F5B53F;
+    --w-wrong: #FF7B73;
+    --w-pending: #939FB6;
+    --w-corrected-bg: #26375E;
+    --ok: #4CCB88;
+    --wait: #F5B53F;
+    --bad: #FF7B73;
+    --idle: #94A1B8;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0D1424;
+  --bg-image: url('./bg-dark.webp');
+  --surface: #131C31;
+  --surface-2: #1A2540;
+  --raised: var(--brand-navy);
+  --line: #223050;
+  --line-strong: #31416A;
+  --ink: #E6EBF3;
+  --ink-2: #C3CCDB;
+  --muted: #94A1B8;
+  --faint: #5E6B85;
+  --ring: #7FA6FF;
+  --shadow-page: 0 0 0 1px rgb(0 0 0 / 0.2), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.3), 0 18px 44px -12px rgb(0 0 0 / 0.7);
+  --go: #1C8148;
+  --go-hover: #22975A;
+  --stop: #C62828;
+  --stop-hover: #DB3434;
+  --switch-on: #E6EBF3;
+  --knob: #131C31;
+  --w-correct: #4CCB88;
+  --w-misspelled: #F5B53F;
+  --w-wrong: #FF7B73;
+  --w-pending: #939FB6;
+  --w-corrected-bg: #26375E;
+  --ok: #4CCB88;
+  --wait: #F5B53F;
+  --bad: #FF7B73;
+  --idle: #94A1B8;
+}

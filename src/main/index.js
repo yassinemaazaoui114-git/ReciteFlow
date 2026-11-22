@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { execFile } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -61,7 +61,34 @@ function createWindow() {
   return win
 }
 
+// RECITEFLOW_PAGE=design: the design sheet, no engine. With RECITEFLOW_SELFTEST=design it saves a full-page
+// picture of each theme in test_out/t1.1/ and quits.
+function openDesignSheet() {
+  const win = new BrowserWindow({
+    width: 1120, height: 820, title: 'ReciteFlow design sheet', icon: join(app.getAppPath(), 'build', 'icon.ico'),
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0D1424' : '#F8FAFC', autoHideMenuBar: true,
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false }
+  })
+  if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL + '/design.html')
+  else win.loadFile(join(__dirname, '../renderer/design.html'))
+  if (process.env.RECITEFLOW_SELFTEST !== 'design') return
+  win.webContents.once('did-finish-load', () => setTimeout(async () => {
+    const outDir = join(app.getAppPath(), 'test_out', 't1.1')
+    mkdirSync(outDir, { recursive: true })
+    const height = await win.webContents.executeJavaScript('document.documentElement.scrollHeight')
+    win.setContentSize(1120, Math.min(height, 6000))
+    for (const theme of ['light', 'dark']) {
+      await win.webContents.executeJavaScript(`pickTheme('${theme}')`)
+      await new Promise((r) => setTimeout(r, 500))
+      writeFileSync(join(outDir, `sheet-${theme}.png`), (await win.webContents.capturePage()).toPNG())
+    }
+    console.log('[reciteflow] design sheet pictures in', outDir)
+    app.quit()
+  }, 1000))
+}
+
 app.whenReady().then(async () => {
+  if (process.env.RECITEFLOW_PAGE === 'design') return openDesignSheet()
   const info = systemInfo()
   ipcMain.handle('system-info', () => info)
   ipcMain.handle('engine-status', () => engine.status)
