@@ -14,6 +14,8 @@
       <symbol id="i-stop" viewBox="0 0 16 16"><rect class="icon-fill" x="3" y="3" width="10" height="10" rx="2" /></symbol>
       <symbol id="i-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5" /><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" /></symbol>
       <symbol id="i-down" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" /></symbol>
+      <symbol id="i-again" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4" /><path d="M2.5 1.8v3h3" /></symbol>
+      <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.5 2.5l3 3L6 13H3v-3z" /></symbol>
       <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" /></symbol>
       <symbol id="i-cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></symbol>
     </svg>
@@ -55,6 +57,7 @@
           <svg class="icon"><use href="#i-down" /></svg></label>
         <label class="option"><input type="checkbox" class="switch" id="keep" /> Keep my recordings for training</label>
         <span class="grow"></span>
+        <button class="btn btn-quiet" id="edit" hidden><svg class="icon"><use href="#i-edit" /></svg>Edit text</button>
         <button class="btn btn-go" id="go" disabled><svg class="icon"><use href="#i-play" /></svg>Start</button>
       </div>
     </main>

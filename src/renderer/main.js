@@ -1,5 +1,6 @@
 // The window: the text screen (paste a text, pick the mic and options, Start), the engine's status, and the
-// recitation's phases: edit -> listening -> finishing -> edit. While reciting, the page shows the live words.
+// recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
+// it is done, the whole text, the result line, Recite again and Edit text.
 import { drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
@@ -14,6 +15,7 @@ const page = $('page')
 const scroll = $('scroll')
 const words = $('words')
 const tally = $('tally')
+const edit = $('edit')
 
 let phase = 'edit'
 let engine = { status: 'starting' }
@@ -52,21 +54,24 @@ function showMessage(text, again = false) {
 // ---- Buttons, options and hint for the current phase ----
 const kbd = (k) => `<span class="kbd">${k}</span>`
 function update() {
-  const idle = phase === 'edit'
+  const idle = phase === 'edit' || phase === 'done'
   go.className = 'btn ' + (idle ? 'btn-go' : 'btn-stop')
   go.innerHTML = {
     edit: '<svg class="icon"><use href="#i-play" /></svg>Start',
+    done: '<svg class="icon"><use href="#i-again" /></svg>Recite again',
     listening: '<svg class="icon"><use href="#i-stop" /></svg>Stop',
     finishing: 'Finishing <span class="dots"><i></i><i></i><i></i></span>'
   }[phase]
   go.disabled = idle ? !loaded() : phase === 'finishing'
-  box.readOnly = !idle
-  box.hidden = !idle
-  page.hidden = idle
+  box.readOnly = phase !== 'edit'
+  box.hidden = phase !== 'edit'
+  page.hidden = phase === 'edit'
   page.dataset.phase = phase
+  edit.hidden = phase !== 'done'
   mic.disabled = !idle || !!dev.wav
   keep.disabled = !idle || !!dev.wav || !settingsRead || engine.history === null
   hide.disabled = !idle   // the beep can be switched any time
+  if (phase === 'done') return showResult()
   $('hint').innerHTML = {
     edit: `Paste the text you want to recite, then press Start ${kbd('Ctrl+Enter')}`,
     listening: (hide.checked
@@ -75,6 +80,20 @@ function update() {
       + (beep.checked ? 'A beep means a mistake. ' : '') + `${kbd('Esc')} to stop.`,
     finishing: 'Checking the last words...'
   }[phase]
+}
+
+// The done line: "x of y words correct (z said). Extra words: a, b n fixed by re-reciting (underlined)." + the
+// correction hint when the recitation was saved
+let finished = null   // the last done event
+function showResult() {
+  const r = finished.result
+  const hint = $('hint')
+  const b = document.createElement('b')
+  b.textContent = `${r.correct} of ${r.total}`
+  hint.replaceChildren(b, ' words correct' + (r.said !== null ? ` (${r.said} said)` : '')
+    + (r.extras.length ? '. Extra words: ' + r.extras.join(', ') : '.')
+    + (r.fixed ? ` ${r.fixed} fixed by re-reciting (underlined).` : '')
+    + (finished.rec_id !== null ? ' Click a word the app got wrong to correct it.' : ''))
 }
 
 // ---- Engine status ----
@@ -133,7 +152,7 @@ hide.addEventListener('change', update)
 
 // ---- Start / Stop ----
 async function start() {
-  if (phase !== 'edit' || !loaded()) return
+  if ((phase !== 'edit' && phase !== 'done') || !loaded()) return
   const text = box.value.trim()
   if (!text) return showStatus('bad', 'Paste a text first.')
   phase = 'listening'
@@ -160,7 +179,17 @@ async function stop() {
   await api.stop()
 }
 
+// Back to the text box, with the text that was recited
+function editText() {
+  if (phase !== 'done') return
+  phase = 'edit'
+  showStatus(loaded() ? 'ok' : 'wait', loaded() ? 'Ready' : 'Loading the speech model...')
+  update()
+  box.focus()
+}
+
 go.addEventListener('click', () => (phase === 'listening' ? stop() : start()))
+edit.addEventListener('click', editText)
 $('again').addEventListener('click', () => api.restartEngine())
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); start() }
@@ -196,7 +225,7 @@ function follow() {
 
 // ---- Recitation events ----
 api.onFrame((frame) => {
-  if (phase === 'edit') return
+  if (phase !== 'listening' && phase !== 'finishing') return
   const key = JSON.stringify(frame.tokens)
   if (key !== drawn) {
     drawn = key
@@ -210,15 +239,19 @@ api.onFrame((frame) => {
   }
 })
 api.onDone((done) => {
-  if (phase === 'edit') return
-  phase = 'edit'
+  if (phase !== 'listening' && phase !== 'finishing') return
+  phase = 'done'
+  finished = done
+  drawn = null
+  drawWords(words, done.tokens)   // the whole text, hidden or not while reciting
+  drawTally(tally, done.counts)
   const note = done.note || ''
   showStatus(note.startsWith('not saved') && !dev.wav ? 'bad' : done.finished ? 'ok' : 'idle',
     done.finished ? 'Finished' : 'Stopped', note)
   update()
 })
 api.onError((err) => {
-  if (phase !== 'edit') phase = 'edit'
+  if (phase === 'listening' || phase === 'finishing') phase = 'edit'
   showStatus('bad', err.message)
   update()
 })

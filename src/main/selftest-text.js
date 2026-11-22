@@ -6,7 +6,7 @@ import { join } from 'node:path'
 // Text screen check (RECITEFLOW_SELFTEST=text): Start is disabled while the model loads -> the mic list is the old
 // window's -> hide and beep start on -> an empty text is refused -> "keep" is saved and still set after an engine
 // restart -> a text typed in the box and Ctrl+Enter start a recitation (the mic, or the replay with
-// RECITEFLOW_WAV) -> Esc stops it. Pictures and a log go to test_out/t2.1/ (suffix "-replay" with RECITEFLOW_WAV).
+// RECITEFLOW_WAV) -> Esc stops it -> Edit text goes back to the box. Pictures and a log go to test_out/t2.1/ (suffix "-replay" with RECITEFLOW_WAV).
 const outDir = join(app.getAppPath(), 'test_out', 't2.1')
 const OLD_APP = join(app.getAppPath(), '..', 'ReciteFlow')
 
@@ -145,9 +145,12 @@ export async function run(win, engine) {
     key(win, 'Escape')
     await sleep(100)
     note(`Esc -> status "${await status()}", button "${await js("document.getElementById('go').textContent.trim()")}"`)
-    await until(win, "document.getElementById('go').textContent === 'Start'", 20000, 'back to the text screen')
-    note(`done: status "${await status()}", ${frames.length} frames, text box editable = ${!(await js("document.getElementById('text').readOnly"))}`)
+    await until(win, "document.getElementById('go').textContent === 'Recite again'", 20000, 'the result')
+    note(`done: status "${await status()}", ${frames.length} frames`)
     await shot(`5-stopped${tag}.png`)
+    await js("document.getElementById('edit').click()")
+    await until(win, "document.getElementById('go').textContent === 'Start'", 2000, 'back to the text screen')
+    note(`Edit text -> text box editable = ${!(await js("document.getElementById('text').readOnly"))}`)
     note('PASS')
   } catch (e) {
     note(`FAIL: ${e.message}`)

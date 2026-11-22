@@ -7,6 +7,8 @@ import { basename, join } from 'node:path'
 // page's next drawn frame, skipped frames (nothing changed), hide mode ("…", no unsaid word drawn), the first unsaid
 // word kept in view, one tone per beep frame, and the longest gap between two drawn frames (a stall).
 // RECITEFLOW_HIDE=0 turns hide off first; RECITEFLOW_EXPECT=<n> = the number of correct words expected at the end.
+// Then the result screen: the whole text, the counters and the done line (written the old window's way from the
+// final words), Recite again (stopped after a few seconds: "(n said)"), and Edit text back to the box.
 // Pictures and a log go to test_out/t2.2/.
 const outDir = join(app.getAppPath(), 'test_out', 't2.2')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -29,6 +31,17 @@ async function until(win, fn, ms, what) {
   throw new Error(`${what}: not seen within ${ms} ms`)
 }
 
+// The old window's done line from the final words and counts (an unsaved replay: no correction hint)
+function oldLine(done) {
+  const s = done.counts
+  const extras = done.tokens.filter((t) => t.kind === 'extra' && t.state === 'extra').map((t) => t.text.slice(1, -1))
+  const fixed = done.tokens.filter((t) => t.underline).length
+  const total = done.result.total   // the summary's word count
+  return `${s.correct} of ${total} words correct` + (s.pending ? ` (${total - s.pending} said)` : '')
+    + (extras.length ? '. Extra words: ' + extras.join(', ') : '.')
+    + (fixed ? ` ${fixed} fixed by re-reciting (underlined).` : '')
+}
+
 const pct = (xs, p) => {
   const s = [...xs].sort((a, b) => a - b)
   return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : NaN
@@ -46,13 +59,13 @@ const WATCH = `(() => {
   }
   let seq = 0
   const check = (n) => {
-    if (n !== seq || document.getElementById('page').hidden) return   // redrawn again since: that one is checked
+    if (n !== seq || document.getElementById('page').dataset.phase !== 'listening') return   // redrawn again since: that one is checked
     const next = words.querySelector('.w[data-state="pending"]')
     const end = scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop <= 2
     w.follow.push(next ? shown(next) : end)
   }
   new MutationObserver(() => {
-    if (!words.childNodes.length) return
+    if (!words.childNodes.length || document.getElementById('page').dataset.phase === 'done') return
     const n = ++seq
     const ws = [...words.querySelectorAll('.w')]
     const paint = { colored: ws.filter((e) => e.dataset.state !== 'pending').length,
@@ -66,7 +79,7 @@ const WATCH = `(() => {
     setTimeout(() => check(n), 700)   // after the follow scroll has settled
   }).observe(words, { childList: true })
   const tick = (t) => {
-    if (w.lastFrame && document.getElementById('go').textContent !== 'Start') {
+    if (w.lastFrame && !['Start', 'Recite again'].includes(document.getElementById('go').textContent)) {
       w.maxGap = Math.max(w.maxGap, t - w.lastFrame)
       if (t - w.lastFrame > 50) w.gaps.push([Math.round(performance.timeOrigin + t), Math.round(t - w.lastFrame)])
     }
@@ -114,6 +127,7 @@ export async function run(win, engine) {
     if (hideOff) await js("document.getElementById('hide').click()")
     note(`replay ${basename(wav)}, hide ${hideOff ? 'off' : 'on'}, beep on`)
     await js(WATCH)
+    await js("window.__text = document.getElementById('text').value.trim()")
     await js("document.getElementById('text').focus()")
     win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Enter', modifiers: ['control'] })
     win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Enter', modifiers: ['control'] })
@@ -136,7 +150,7 @@ export async function run(win, engine) {
       }
       if (Date.now() - t0 > 400000) throw new Error('the replay did not end')
     }
-    await until(win, "document.getElementById('go').textContent === 'Start'", 5000, 'back to the text screen')
+    await until(win, "document.getElementById('go').textContent === 'Recite again'", 5000, 'the result screen')
     const w = await js('window.__watch')
     const changed = frames.filter((f) => f.changed)
     note(`${frames.length} frames, ${changed.length} change the words, ${w.paints.length} redraws on the page`)
@@ -176,6 +190,47 @@ export async function run(win, engine) {
     if (expect !== null && r.correct !== expect) fail(`${expect} correct expected`)
     if (!String(w.paints.at(-1)?.tally).startsWith(`${done.counts.correct} Correct`)) fail('the counters differ from the result')
     await shot('after')
+
+    // The result screen
+    const screen = () => js(`(() => { const $ = (id) => document.getElementById(id)
+      return { hint: $('hint').textContent, status: $('status').textContent, words: $('words').querySelectorAll('.w').length,
+        more: !!$('words').querySelector('.more'), tally: $('tally').textContent, edit: !$('edit').hidden,
+        hide: !$('hide').disabled, box: $('text').hidden, page: !$('page').hidden } })()`)
+    const tallyOf = (c) => ['correct', 'misspelled', 'wrong', 'missed', 'extra', 'pending']
+      .map((k, i) => `${c[k] ?? 0} ${['Correct', 'Misspelled', 'Wrong', '[Missed]', '{Extra}', 'Not yet said'][i]}`).join('')
+    const checkResult = async (d, what) => {
+      const r = await screen()
+      note(`${what}: status "${r.status}", result line "${r.hint}"`)
+      note(`${what}: ${r.words} words drawn of ${d.tokens.length}, "…" ${r.more}, counters "${r.tally}", ` +
+        `Edit text shown ${r.edit}, hide switch enabled ${r.hide}, page shown ${r.page}, text box hidden ${r.box}`)
+      if (r.hint !== oldLine(d)) fail(`${what}: the old window would say "${oldLine(d)}"`)
+      if (r.words !== d.tokens.length || r.more) fail(`${what}: the whole text is not shown`)
+      if (r.tally !== tallyOf(d.counts)) fail(`${what}: the counters differ from the result`)
+      if (!r.edit || !r.hide || !r.page || !r.box) fail(`${what}: wrong controls on the result screen`)
+      if (r.status !== (d.finished ? 'Finished' : 'Stopped')) fail(`${what}: status`)
+    }
+    await checkResult(done, 'result')
+
+    // Recite again, stopped after a few seconds
+    done = null
+    await js("document.getElementById('go').click()")
+    await until(win, "document.getElementById('status').textContent === 'Replaying the recording'", 15000, 'replaying again')
+    await sleep(6000)
+    win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' })
+    win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' })
+    while (!done) await sleep(100)
+    await until(win, "document.getElementById('go').textContent === 'Recite again'", 5000, 'the result screen again')
+    await shot('stopped')
+    await checkResult(done, 'Recite again, Esc after 6 s')
+    if (!done.counts.pending) fail('the stopped recitation should have words not said')
+
+    // Edit text: back to the box with the same text
+    await js("document.getElementById('edit').click()")
+    await until(win, "document.getElementById('go').textContent === 'Start'", 2000, 'back to the text screen')
+    const back = await js("[document.getElementById('text').hidden, document.getElementById('text').readOnly, " +
+      "document.getElementById('text').value.trim() === (window.__text ?? ''), document.getElementById('page').hidden]")
+    note(`Edit text: text box shown ${!back[0]}, editable ${!back[1]}, same text ${back[2]}, page hidden ${back[3]}`)
+    if (back[0] || back[1] || !back[2] || !back[3]) fail('Edit text did not go back to the box')
     if (pass) note('PASS')
   } catch (e) {
     fail(e.message)
