@@ -9,7 +9,7 @@ GET /devices (microphones), POST /recite {text, device, wav, keep_audio} (one at
 POST /corrections {rec_id, pos, state} (state null = undo), GET/POST /settings {keep_audio}.
 Recitation events (recite.py): "frame", "done", "error". Errors answer {"error": "<plain words>"} with 400 / 409 / 503.
 Model and compute type: RECITEFLOW_MODEL / RECITEFLOW_COMPUTE (default large-v3-turbo, int8_float16).
-History: RECITEFLOW_DB (default ReciteFlow/data/history.db; tests give a temporary one).
+History: RECITEFLOW_DB (default data/history.db in the project folder; tests give a temporary one).
 Replays (a "wav" in /recite) are saved only with RECITEFLOW_SAVE_REPLAY=1.
 A recitation that does not move for RECITEFLOW_STALL_S seconds (default 30) ends the engine with exit code 3, after
 an "error" event and a plain-words last line on stderr; the window then starts it again.

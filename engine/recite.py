@@ -10,7 +10,7 @@ Events go through `post(event, data)` (same shape as `server.emit`):
            display_lags and realign_lags (s), for latency measurements
   "error"  {message}
 
-History: `ReciteFlow\\data\\history.db` (+ `data\\recordings\\`),
+History: `data\\history.db` (+ `data\\recordings\\`) in the project folder,
 opened with `open_history()`. Tests and replays pass their own `History` (or none) and never touch it.
 """
 
@@ -22,8 +22,8 @@ from pathlib import Path
 
 from core.history import History, corrected_counts, labels_for, token_list
 
-# The history lives in the ReciteFlow data folder next to this project
-HISTORY_DB = Path(__file__).resolve().parents[2] / "ReciteFlow" / "data" / "history.db"
+# The history lives in this project's data folder (off git)
+HISTORY_DB = Path(__file__).resolve().parents[1] / "data" / "history.db"
 MISTAKES = ("wrong", "missed", "misspelled", "extra")
 HIDDEN_MARK = "…"  # shown after the last said word while the rest of the text is hidden
 

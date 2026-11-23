@@ -2,6 +2,7 @@
 
 from core import DisplayWord
 from core.history import History, token_list
+from pathlib import Path
 from types import SimpleNamespace
 
 from asr.words import Word
@@ -19,7 +20,7 @@ SUMMARY = {"words": 3, "correct": 1, "misspelled": 0, "wrong": 1, "missed": 0, "
 
 
 def test_history_path():
-    assert HISTORY_DB.parts[-3:] == ("ReciteFlow", "data", "history.db")
+    assert HISTORY_DB == Path(__file__).resolve().parents[2] / "data" / "history.db"
 
 
 def test_draw_tokens_and_result():

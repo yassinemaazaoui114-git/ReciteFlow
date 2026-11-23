@@ -1,8 +1,9 @@
 {
-  "name": "reciteflow-electron",
-  "version": "0.1.0",
+  "name": "reciteflow",
+  "productName": "ReciteFlow",
+  "version": "1.0.0",
   "private": true,
-  "description": "ReciteFlow with an Electron window: recite from memory, every word coloured live",
+  "description": "ReciteFlow: recite from memory, every word coloured live",
   "main": "out/main/index.js",
   "scripts": {
     "postinstall": "node node_modules/electron/install.js",
