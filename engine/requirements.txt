@@ -12,6 +12,8 @@ nvidia-cudnn-cu12==9.*; sys_platform == "win32"
 # Open a file: OCR of a photo of a page (read_text.py, CPU), Windows' picture decoder for HEIC photos
 rapidocr
 pillow
+# Open a file: PDFs (read_text.py)
+pymupdf
 winrt-Windows.Graphics.Imaging; sys_platform == "win32"
 winrt-Windows.Storage; sys_platform == "win32"
 winrt-Windows.Storage.Streams; sys_platform == "win32"

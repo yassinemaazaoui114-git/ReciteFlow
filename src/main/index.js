@@ -70,10 +70,12 @@ function saveTheme(theme) {
   return { theme }
 }
 
-// Open a file for the text box: a .txt file or a photo of a page. The page picks it (pickFile: the Windows file
-// dialog), then asks for its text (readPicked): engine/read_text.py reads it in its own short process, so the OCR's
-// memory is given back at once and the speech engine is never touched. Only the file picked last can be read.
+// Open a file for the text box: a .txt file, a PDF or a photo of a page. The page picks it (pickFile: the Windows
+// file dialog), then asks for its text (readPicked): engine/read_text.py reads it in its own short process, so the
+// OCR's memory is given back at once and the speech engine is never touched. Only the file picked last can be read.
+// A PDF of more than 2 pages answers { pages } first; the page then asks again with the pages chosen.
 const TEXT_FILES = ['txt']
+const PDFS = ['pdf']
 const PHOTOS = ['png', 'jpg', 'jpeg', 'jpe', 'jfif', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'webp', 'avif', 'heic', 'heif']
 let picked = null
 async function pickFile(win) {
@@ -83,23 +85,27 @@ async function pickFile(win) {
     path = process.env.RECITEFLOW_PICK || null
   } else {
     const res = await dialog.showOpenDialog(win, {
-      title: 'Open a text or a photo of a page',
+      title: 'Open a text, a PDF or a photo of a page',
       properties: ['openFile'],
-      filters: [{ name: 'Text or photo', extensions: [...TEXT_FILES, ...PHOTOS] },
-        { name: 'Text files', extensions: TEXT_FILES }, { name: 'Photos', extensions: PHOTOS }]
+      filters: [{ name: 'Text, PDF or photo', extensions: [...TEXT_FILES, ...PDFS, ...PHOTOS] },
+        { name: 'Text files', extensions: TEXT_FILES }, { name: 'PDFs', extensions: PDFS },
+        { name: 'Photos', extensions: PHOTOS }]
     })
     if (!res.canceled) path = res.filePaths[0]
   }
   if (!path) return { canceled: true }
   picked = path
-  return { name: basename(path), photo: PHOTOS.includes(extname(path).slice(1).toLowerCase()) }
+  const ext = extname(path).slice(1).toLowerCase()
+  return { name: basename(path), photo: PHOTOS.includes(ext), pdf: PDFS.includes(ext) }
 }
-async function readPicked() {
+async function readPicked(pages) {
   if (!picked) return { error: 'Pick a file first.' }
+  if (pages != null && !/^[\d ,-]{1,40}$/.test(String(pages))) return { error: 'Write the pages as 3, or 3-4, or 3, 7.' }
   let python
   try { python = await engine.pythonPath() } catch (e) { return { error: e.message } }
+  const args = ['-u', join(engine.dir, 'read_text.py'), picked, ...(pages != null ? ['--pages', String(pages)] : [])]
   return new Promise((done) => {
-    execFile(python, ['-u', join(engine.dir, 'read_text.py'), picked], {
+    execFile(python, args, {
       cwd: engine.dir, windowsHide: true, timeout: 120000, maxBuffer: 64 * 1024 * 1024,
       env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
     }, (err, stdout) => {
@@ -193,7 +199,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings-set', (_e, settings) => engine.call('/settings', settings))
   const win = createWindow()
   ipcMain.handle('file-pick', () => pickFile(win))
-  ipcMain.handle('file-read', () => readPicked())
+  ipcMain.handle('file-read', (_e, pages) => readPicked(pages))
   const send =(status) => { if (!win.isDestroyed()) win.webContents.send('engine-status', status) }
   const forward = (event, data) => {
     if (['frame', 'done', 'error'].includes(event) && !win.isDestroyed()) win.webContents.send('recite-' + event, data)

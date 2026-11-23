@@ -2,7 +2,7 @@
 // recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
 // it is done, the whole text, the result line, Recite again and Edit text; after a saved recitation a click on a word
 // opens the menu to correct the app. The settings button (top right) opens Settings (the theme) in the text box's
-// place, when not reciting. "Open a file" fills the text box from a .txt or a photo, through a popup.
+// place, when not reciting. "Open a file" fills the text box from a .txt, a PDF or a photo, through a popup.
 import { LABELS, drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
@@ -345,8 +345,9 @@ $('open-settings').addEventListener('click', (e) => {
 })
 $('close-settings').addEventListener('click', closeSettings)
 
-// ---- Open a file (Ctrl+O): a .txt or a photo of a page. A popup shows the text found, to fix it and pick the part
-// to recite ("Use this part") or "Take it all"; the choice replaces the text box's text (Ctrl+Z brings it back) ----
+// ---- Open a file (Ctrl+O): a .txt, a PDF or a photo of a page. A popup shows the text found (for a PDF of more
+// than 2 pages, after asking which pages), to fix it and pick the part to recite ("Use this part") or "Take it all";
+// the choice replaces the text box's text (Ctrl+Z brings it back) ----
 const pick = $('pick')
 const pickText = $('pick-text')
 let reading = 0   // which opening is in progress; the text of a cancelled one is dropped when it arrives
@@ -368,28 +369,92 @@ function showPickCount() {
   $('pick-all').disabled = !all
 }
 
-async function openFile() {
-  if (phase !== 'edit' || settingsOpen || pick.open) return
-  const file = await api.pickFile()
-  if (file.canceled || phase !== 'edit' || pick.open) return
-  const id = ++reading
+// The popup while a file is read: the hint with moving dots, an empty text, no choice yet
+function showReading(file, what) {
   const dots = document.createElement('span')
   dots.className = 'dots'
   dots.innerHTML = '<i></i><i></i><i></i>'
-  pickHint(file.name, file.photo ? '. Reading the words in the photo ' : '. Reading it ', dots)
+  pickHint(file.name, what, dots)
+  $('pick-pages').hidden = true
+  pickText.hidden = false
   pickText.value = ''
   pickText.disabled = true
   $('pick-count').textContent = ''
   $('pick-part').disabled = $('pick-all').disabled = true
+}
+
+async function openFile() {
+  if (phase !== 'edit' || settingsOpen || pick.open) return
+  const file = await api.pickFile()
+  if (file.canceled || phase !== 'edit' || pick.open) return
+  showReading(file, file.photo ? '. Reading the words in the photo ' : '. Reading it ')
+  $('pick-range').value = ''
   pick.showModal()
-  const res = await api.readPicked()
+  readInto(file)
+}
+
+// A PDF of more than 2 pages: which pages to read ('3', '3-4' or '3, 7'), at most 2, checked here at once (and
+// again by the reader)
+const MAX_PAGES = 2
+let pdf = null   // { file, pages } while its pages are being chosen
+function pagesProblem(spec, count) {
+  const pages = new Set()
+  for (const part of spec.replace(/\s+/g, '').split(',')) {
+    const m = /^(\d+)(?:-(\d+))?$/.exec(part)
+    if (!m) return 'Write the pages as 3, or 3-4, or 3, 7.'
+    const [a, b] = [+m[1], +(m[2] ?? m[1])].sort((x, y) => x - y)
+    if (b - a + 1 > MAX_PAGES) return `Pick at most ${MAX_PAGES} pages.`
+    for (let p = a; p <= b; p++) pages.add(p)
+  }
+  if (pages.size > MAX_PAGES) return `Pick at most ${MAX_PAGES} pages.`
+  if ([...pages].some((p) => p < 1 || p > count)) return `This PDF has pages 1 to ${count}.`
+  return null
+}
+function askPages(file, count, problem) {
+  pdf = { file, pages: count }
+  pickHint(file.name, `. This PDF has ${count} pages: pick up to ${MAX_PAGES} to read.`)
+  pickText.hidden = true
+  $('pick-pages').hidden = false
+  const range = $('pick-range')
+  if (!range.value) range.value = `1-${MAX_PAGES}`
+  showPagesNote(problem)
+  range.focus()
+  range.select()
+}
+function showPagesNote(problem) {
+  $('pick-range').setAttribute('aria-invalid', String(!!problem))
+  const note = $('pick-range-note')
+  note.dataset.tone = problem ? 'bad' : ''
+  note.textContent = problem || 'One page or two: 3, or 3-4, or 3, 7.'
+}
+$('pick-pages').addEventListener('submit', (e) => {
+  e.preventDefault()
+  if (!pdf) return
+  const spec = $('pick-range').value.trim()
+  const problem = pagesProblem(spec, pdf.pages)
+  if (problem) return askPages(pdf.file, pdf.pages, problem)
+  const file = pdf.file
+  showReading(file, `. Reading ${/[,-]/.test(spec) ? 'pages' : 'page'} ${spec} `)
+  readInto(file, spec)
+})
+$('pick-range').addEventListener('input', () => showPagesNote(null))
+
+async function readInto(file, pages) {
+  const id = ++reading
+  const res = await api.readPicked(pages)
   if (id !== reading || !pick.open) return
+  if (res.pages) return askPages(file, res.pages)
+  // chosen pages that give nothing: choose others
+  if (res.error && pages != null && pdf) return askPages(pdf.file, pdf.pages, res.error)
   if (res.error) {
     pick.close()
     return showStatus('bad', res.error)
   }
+  pdf = null
   pickHint(file.name, '. Select the part to recite, or take it all. '
-    + (file.photo ? 'Check the words first: a photo can be misread, and you can fix them here.' : 'You can change it here first.'))
+    + (file.photo ? 'Check the words first: a photo can be misread, and you can fix them here.'
+      : res.ocr ? 'Check the words first: its pictures of text can be misread, and you can fix them here.'
+        : 'You can change it here first.'))
   pickText.disabled = false
   pickText.value = res.text
   pickText.setSelectionRange(0, 0)
@@ -408,7 +473,7 @@ function usePick(text) {
 }
 
 for (const ev of ['select', 'selectionchange', 'input', 'keyup', 'mouseup']) pickText.addEventListener(ev, showPickCount)
-pick.addEventListener('close', () => { reading++ })   // Esc, Cancel or a choice: a reading still going is dropped
+pick.addEventListener('close', () => { reading++; pdf = null })   // Esc, Cancel or a choice: a reading still going is dropped
 $('pick-cancel').addEventListener('click', () => pick.close())
 $('pick-part').addEventListener('click', () => { if (pickPart()) usePick(pickPart()) })
 $('pick-all').addEventListener('click', () => { if (pickText.value.trim()) usePick(pickText.value.trim()) })

@@ -72,7 +72,7 @@
         <label class="option"><input type="checkbox" class="switch" id="hide" checked /> Hide the text while I recite</label>
         <label class="option"><input type="checkbox" class="switch" id="beep" checked /> Beep on a mistake</label>
         <span class="grow"></span>
-        <button class="btn btn-quiet btn-small" id="open-file" title="Open a text file or a photo of a page (Ctrl+O)"><svg class="icon"><use href="#i-open" /></svg>Open a file</button>
+        <button class="btn btn-quiet btn-small" id="open-file" title="Open a text file, a PDF or a photo of a page (Ctrl+O)"><svg class="icon"><use href="#i-open" /></svg>Open a file</button>
       </div>
       <div class="bar" id="actions">
         <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
@@ -94,6 +94,12 @@
     <dialog class="pick" id="pick" aria-labelledby="pick-title">
       <h2 class="pick-title" id="pick-title">Pick what to recite</h2>
       <p class="hint" id="pick-hint"></p>
+      <form class="pick-pages" id="pick-pages" hidden>
+        <label class="setting-name" for="pick-range">Pages</label>
+        <input class="pick-range" id="pick-range" autocomplete="off" spellcheck="false" aria-describedby="pick-range-note" />
+        <button class="btn btn-strong" type="submit">Read these pages</button>
+        <p class="hint" id="pick-range-note"></p>
+      </form>
       <textarea class="field pick-text" id="pick-text" spellcheck="false" aria-label="Text found in the file"></textarea>
       <div class="bar">
         <span class="hint" id="pick-count" aria-live="polite"></span>

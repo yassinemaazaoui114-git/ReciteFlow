@@ -18,9 +18,10 @@ contextBridge.exposeInMainWorld('reciteflow', {
   correct: (recId, pos, state) => ipcRenderer.invoke('correct', recId, pos, state), // state null = undo
   getSettings: () => ipcRenderer.invoke('settings-get'), // { keep_audio }
   setSettings: (settings) => ipcRenderer.invoke('settings-set', settings),
-  // Open a file: pickFile answers { name, photo } or { canceled }; readPicked answers { text } or { error }
+  // Open a file: pickFile answers { name, photo, pdf } or { canceled }; readPicked(pages) answers { text, ocr },
+  // { pages: n } (a PDF of more than 2 pages, pages not given: '3', '3-4' or '3, 7') or { error }
   pickFile: () => ipcRenderer.invoke('file-pick'),
-  readPicked: () => ipcRenderer.invoke('file-read'),
+  readPicked: (pages) => ipcRenderer.invoke('file-read', pages),
   // The window's theme: 'system' (follows Windows) | 'light' | 'dark'; answers { theme } or { error }
   getTheme: () => ipcRenderer.invoke('theme-get'),
   setTheme: (theme) => ipcRenderer.invoke('theme-set', theme),

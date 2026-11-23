@@ -101,8 +101,9 @@ Light and dark themes are both built in (Settings, top right: Windows, Light or 
   counters and the summary update at once, and your correction is saved.
 - **History.** Every recitation from the microphone is saved on your computer, with its result. With "Keep my
   recordings for training" on, the audio is kept too.
-- **Open a text file or a photo.** Take a picture of a book page and ReciteFlow reads its words (on your computer,
-  without the graphics card), then lets you pick the part to recite.
+- **Open a text file, a PDF or a photo.** Take a picture of a book page and ReciteFlow reads its words (on your
+  computer, without the graphics card), then lets you pick the part to recite. PDFs are read up to 2 pages at a time,
+  scanned pages included; charts are left out.
 - **Light and dark themes**, following Windows by default.
 - **Keyboard friendly.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> starts, <kbd>Esc</kbd> stops, and words can be corrected
   without a mouse.
@@ -144,8 +145,9 @@ To start it again later, open a terminal in the `ReciteFlow` folder and run `npm
 ## How to use it
 
 1. **Paste your text** into the big box. Line breaks are kept. Or click **Open a file** (<kbd>Ctrl</kbd>+<kbd>O</kbd>)
-   and pick a `.txt` file or a photo of a page (JPG, PNG, HEIC, WebP...). A window shows the text found: fix any
-   misread word, then select the part you want and press *Use this part*, or press *Take it all*.
+   and pick a `.txt` file, a PDF or a photo of a page (JPG, PNG, HEIC, WebP...). For a PDF of more than 2 pages,
+   first type the pages to read (one or two, like `3` or `3-4`). A window shows the text found: fix any misread word,
+   then select the part you want and press *Use this part*, or press *Take it all*.
 2. **Pick your microphone** in the list at the bottom left (or leave *Default microphone*).
 3. **Choose your options:**
    - *Hide the text while I recite*: on, to really test your memory.
@@ -243,7 +245,7 @@ src/preload/       the few named calls the page may use (the page has no Node ac
 src/renderer/      the page; design/ holds the design system (tokens, components, word colours)
 engine/server.py   local server: routes and live events (server-sent events)
 engine/recite.py   the recitation logic, no user interface
-engine/read_text.py  reads an opened .txt or photo (RapidOCR, on the CPU) for the text box
+engine/read_text.py  reads an opened .txt, PDF (PyMuPDF) or photo (RapidOCR, on the CPU) for the text box
 engine/asr/        microphone and WAV input, Silero VAD, faster-whisper, acoustic check, live passes
 engine/matcher/    text normalisation and word alignment
 engine/core/       session logic, history (SQLite) and corrections

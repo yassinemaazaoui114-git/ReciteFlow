@@ -419,6 +419,19 @@ body {
 .pick-text { flex: 1; min-height: 0; margin-top: var(--s1); box-shadow: none; background: var(--surface);
   scrollbar-color: var(--line-strong) transparent; }
 .pick-text:disabled { color: var(--muted); }
+.pick-text[hidden], .pick-pages[hidden] { display: none; }
+.pick > .bar { margin-top: auto; }
+/* A long PDF: which pages to read (at most 2), before the text is shown */
+.pick-pages { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); margin-top: var(--s2); }
+.pick-pages .setting-name { margin: 0; }
+.pick-range { width: 128px; height: 40px; padding: 0 var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font: 500 var(--text-lg) / 1 var(--font-ui); font-variant-numeric: tabular-nums;
+  transition: border-color var(--t-hover) ease; }
+.pick-range:hover { border-color: var(--ink-2); }
+.pick-range:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.pick-range[aria-invalid='true'] { border-color: var(--bad); }
+.pick-pages .hint { flex-basis: 100%; margin: 0; }
+.pick-pages .hint[data-tone='bad'] { color: var(--bad); }
 .pick-text::selection { background: color-mix(in srgb, var(--ring) 28%, transparent); }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.98) translateY(4px); } }
 

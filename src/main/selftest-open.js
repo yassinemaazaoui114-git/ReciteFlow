@@ -7,9 +7,12 @@ import { join } from 'node:path'
 // -> select a sentence, "Use this part" puts only it in the text box (Ctrl+Z gives the old text back). A .txt ->
 // "Take it all". A broken picture -> a plain-words status, no popup. Cancel while a photo is read -> the box is
 // unchanged. Ctrl+O opens, Esc closes. Pictures of the popup in both themes and at 640x460. Log and pictures in
-// test_out/open/. Uses the generated test photos (engine/check_ocr.py make).
+// test_out/open/. PDFs: 2 typed pages read at once; a 12-page one asks for the pages (3 pages and a page past the
+// end refused, then 2 pages read); a scanned one read with the OCR; locked and broken ones give a message. Uses the
+// generated test photos and PDFs (engine/check_ocr.py make, engine/check_pdf.py make).
 const outDir = join(app.getAppPath(), 'test_out', 'open')
 const gen = join(app.getAppPath(), 'engine', 'clips', 'ocr', 'generated')
+const pdfs = join(app.getAppPath(), 'engine', 'clips', 'ocr', 'pdf')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const words = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}' ]+/gu, ' ').split(/\s+/).filter(Boolean)
 
@@ -129,6 +132,71 @@ export async function run(win) {
     await sleep(500)
     check(!(await isOpen()), 'no file picked: no popup')
 
+    // PDFs (engine/check_pdf.py make): 2 typed pages straight to the text; a long one asks for the pages first
+    const sameText = (a, b) => words(a).join(' ') === words(b).join(' ')
+    const truthOf = (name) => readFileSync(join(pdfs, name.replace(/\.pdf$/, '.txt')), 'utf8').trim()
+    process.env.RECITEFLOW_PICK = join(pdfs, 'text.pdf')
+    await click('#open-file')
+    const ps = await until(filled, 10000)
+    check(ps >= 0 && sameText(await js("document.getElementById('pick-text').value"), truthOf('text.pdf')),
+      `a 2-page text PDF: both pages shown in ${ps.toFixed(2)} s, same words as the true text`)
+    key('Escape')
+    await sleep(200)
+
+    process.env.RECITEFLOW_PICK = join(pdfs, 'long.pdf')
+    await click('#open-file')
+    const asked = "document.getElementById('pick').open && !document.getElementById('pick-pages').hidden"
+    check(await until(asked, 10000) >= 0 && await js("document.getElementById('pick-text').hidden") &&
+      /12 pages/.test(await js("document.getElementById('pick-hint').textContent")) &&
+      await js("document.activeElement.id === 'pick-range' && document.getElementById('pick-range').value === '1-2'"),
+    'a 12-page PDF asks which pages first (says 12 pages, box focused, 1-2 offered), text hidden')
+    await shot('pdf-pages-light.png')
+    const typePages = async (spec) => {
+      await js(`(() => { const r = document.getElementById('pick-range'); r.value = ${JSON.stringify(spec)};
+        r.dispatchEvent(new Event('input')) })()`)
+      // Enter as typed: a form is sent on the key's character, not on the key itself
+      win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Return' })
+      win.webContents.sendInputEvent({ type: 'char', keyCode: '\r' })
+      win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Return' })
+      await sleep(150)
+    }
+    await typePages('3-5')
+    check(await js(asked) && /at most 2/.test(await js("document.getElementById('pick-range-note').textContent")) &&
+      await js("document.getElementById('pick-range').getAttribute('aria-invalid')") === 'true',
+    `3 pages refused at once: "${await js("document.getElementById('pick-range-note').textContent")}"`)
+    await shot('pdf-pages-refused.png')
+    await typePages('13')
+    check(/pages 1 to 12/.test(await js("document.getElementById('pick-range-note').textContent")), 'a page past the end refused')
+    await typePages('4, 9')
+    const ls = await until(filled, 10000)
+    check(ls >= 0 && sameText(await js("document.getElementById('pick-text').value"), truthOf('long.pdf')),
+      `pages 4, 9 read in ${ls.toFixed(2)} s: only those two pages, same words as the true text`)
+    await click('#pick-all')
+    await sleep(200)
+    check(sameText(await box(), truthOf('long.pdf')), 'Take it all puts those pages in the text box')
+
+    process.env.RECITEFLOW_PICK = join(pdfs, 'scanned.pdf')
+    await click('#open-file')
+    const ss = await until(filled, 60000)
+    const scanned = await js("document.getElementById('pick-text').value")
+    const tw = words(truthOf('scanned.pdf'))
+    const gw = words(scanned)
+    const wrong = tw.filter((w, i) => w !== gw[i]).length + Math.max(0, gw.length - tw.length)
+    check(ss >= 0 && wrong / tw.length <= 0.05 && /can be misread/.test(await js("document.getElementById('pick-hint').textContent")),
+      `a scanned PDF (2 pages, OCR): read in ${ss.toFixed(1)} s, ${wrong} of ${tw.length} words different, "check the words" hint`)
+    await shot('pdf-scanned.png')
+    key('Escape')
+    await sleep(200)
+
+    for (const [name, says] of [['locked.pdf', 'locked with a password'], ['broken.pdf', 'Could not open this PDF']]) {
+      process.env.RECITEFLOW_PICK = join(pdfs, name)
+      const kept = await box()
+      await click('#open-file')
+      await until(`!document.getElementById('pick').open && /${says}/.test(document.getElementById('status').textContent)`, 10000)
+      check(!(await isOpen()) && new RegExp(says).test(await js("document.getElementById('status').textContent")) &&
+        await box() === kept, `${name}: "${await js("document.getElementById('status').textContent")}", box unchanged`)
+    }
+
     // pictures: dark, and the smallest window
     process.env.RECITEFLOW_PICK = join(gen, 'long_clean_7176-88083-0000_14u-photo.jpg')
     nativeTheme.themeSource = 'dark'
@@ -140,6 +208,14 @@ export async function run(win) {
     check(await js(`(() => { const b = document.getElementById('pick-all').getBoundingClientRect();
       return b.right <= innerWidth && b.bottom <= innerHeight })()`), 'at 640x460 the popup and its buttons fit')
     await shot('photo-small-dark.png')
+    key('Escape')
+    await sleep(200)
+    process.env.RECITEFLOW_PICK = join(pdfs, 'long.pdf')
+    await click('#open-file')
+    await until("!document.getElementById('pick-pages').hidden", 10000)
+    check(await js(`(() => { const b = document.querySelector('#pick-pages .btn').getBoundingClientRect();
+      return b.right <= innerWidth && b.bottom <= innerHeight })()`), 'at 640x460 the pages box fits')
+    await shot('pdf-pages-small-dark.png')
     nativeTheme.themeSource = 'system'
   } catch (err) {
     check(false, `error: ${err.message}`)
