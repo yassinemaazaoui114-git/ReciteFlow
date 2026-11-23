@@ -164,7 +164,7 @@ app.whenReady().then(async () => {
     s.loadSeconds != null ? `model loaded in ${s.loadSeconds} s` : '', s.message || ''))
   // the settings check needs no engine (and no GPU)
   if (process.env.RECITEFLOW_SELFTEST?.startsWith('settings')) return (await import('./selftest-settings')).run(win)
-  // RECITEFLOW_SELFTEST=speed: start-up, memory and VRAM marks for engine/check_speed.py (src/main/selftest-speed.js)
+  // RECITEFLOW_SELFTEST=speed: start-up, memory and VRAM marks for an outside measurement (src/main/selftest-speed.js)
   const speed = process.env.RECITEFLOW_SELFTEST === 'speed' && (await import('./selftest-speed')).run(win, engine)
   engine.start()
   console.log('[reciteflow] system info:', await info)

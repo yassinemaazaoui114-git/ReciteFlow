@@ -1,5 +1,5 @@
-// Speed and memory check (RECITEFLOW_SELFTEST=speed, with RECITEFLOW_WAV + RECITEFLOW_FILE), driven by
-// engine/check_speed.py, which measures from outside. Prints "[speed] <mark> <epoch ms>" lines: the main process
+// Speed and memory check (RECITEFLOW_SELFTEST=speed, with RECITEFLOW_WAV + RECITEFLOW_FILE), for a script that
+// measures time, RAM and VRAM from outside. Prints "[speed] <mark> <epoch ms>" lines: the main process
 // start, the window shown, the engine ready, the replay started (after RECITEFLOW_IDLE_S seconds idle, default 20)
 // and done (with the result), then quits.
 import { app } from 'electron'

@@ -8,8 +8,8 @@ import { join } from 'node:path'
 // A. the recitation does not move: the engine starts with RECITEFLOW_STALL_S=0.2 (set in index.js), so its own
 //    check sees the first speech pass as stuck and ends the engine;
 // B. the whole engine hangs: its process is suspended part way through a replay, so the event stream goes silent.
-// Log and pictures go to test_out/t3.2b/.
-const outDir = join(app.getAppPath(), 'test_out', 't3.2b')
+// Log and pictures go to test_out/stall/.
+const outDir = join(app.getAppPath(), 'test_out', 'stall')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function waitFor(engine, status, ms) {
