@@ -149,6 +149,7 @@ class Engine:
         self.rec_id = None  # history id of the finished recitation (corrections go there)
         self._beeped = set()  # mistake keys already announced (new_mistakes)
         self._heard_of = None  # the live pass words the last frame showed as heard
+        self.progress_at = time.perf_counter()  # last sign of life of the running recitation (an audio block, a step)
 
     def load(self):
         """Load the recognizer here (the server loads it itself). Raises on failure."""
@@ -160,6 +161,11 @@ class Engine:
     def busy(self):
         return self._running
 
+    def stalled(self, limit):
+        """True when a recitation runs but has not moved for `limit` seconds: audio blocks arrive every few tens of
+        ms and a pass takes well under a second, so this means the audio or the speech model stopped answering."""
+        return self._running and time.perf_counter() - self.progress_at > limit
+
     def start(self, text, device=None, wav=None, keep_audio=True):
         """Start a recitation of `text` from the mic `device` (None = default), or a WAV replayed in real time.
         Only one at a time: raises RuntimeError while one runs."""
@@ -168,6 +174,7 @@ class Engine:
                 raise RuntimeError("A recitation is already running.")
             self._running = True
         self._stop.clear()
+        self.progress_at = time.perf_counter()
         self.text, self.breaks, self.toks, self.summary, self.rec_id = text, set(), [], {}, None
         self._beeped = set()
         threading.Thread(target=self._run, args=(text, device, wav, keep_audio), daemon=True).start()
@@ -181,6 +188,7 @@ class Engine:
 
     def _until_stop(self, blocks, session=None):
         for block in blocks:
+            self.progress_at = time.perf_counter()
             if self._stop.is_set():
                 return
             yield block
@@ -216,7 +224,9 @@ class Engine:
                 self._frame(session, first=True)
                 for _ in session.run(self._until_stop(blocks, session), segmenter):
                     self._frame(session)
+            self.progress_at = time.perf_counter()
             session.finish()
+            self.progress_at = time.perf_counter()
             self._frame(session, live=False)
             rec_id, note = self._save(session, blocks, wav, keep_audio and not wav, DEFAULT_MODE)
             self.rec_id = rec_id

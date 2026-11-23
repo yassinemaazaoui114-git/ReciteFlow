@@ -7,6 +7,8 @@ const RESTARTS = 3          // restarts allowed within RESTART_WINDOW_MS, then t
 const RESTART_WINDOW_MS = 60000
 const RESTART_DELAY_MS = 1000
 const STOP_WAIT_MS = 3000   // on quit, the engine gets this long to stop after /shutdown before it is killed
+const SILENT_MS = 45000     // the event stream carries a heartbeat every 15 s: this long with nothing = engine hung
+const STALL_EXIT = 3        // the engine ended a stuck recitation; its last stderr line says so in plain words
 
 // The real python.exe behind "py -3.12", so that stopping it stops the engine (not just the py launcher).
 function findPython() {
@@ -71,12 +73,25 @@ export class Engine extends EventEmitter {
     child.on('error', (e) => { stderr += e.message })
     child.on('exit', (code) => {
       if (child !== this.child) return
+      clearInterval(this.watch)
       this.child = null
       this.port = null
       if (this.quitting) return
-      const last = stderr.trim().split(/\r?\n/).slice(-3).join(' ')
-      this._died(`The engine stopped (exit code ${code})${last ? ': ' + last : ''}`)
+      const lines = stderr.trim().split(/\r?\n/)
+      const last = lines.slice(-3).join(' ')
+      if (this.hung) this._died(this.hung)
+      else if (code === STALL_EXIT && lines.at(-1)) this._died(lines.at(-1))
+      else this._died(`The engine stopped (exit code ${code})${last ? ': ' + last : ''}`)
     })
+    // Nothing on the event stream for SILENT_MS, not even the heartbeat: the engine hung, start a fresh one
+    this.hung = null
+    this.heardAt = Date.now()
+    clearInterval(this.watch)
+    this.watch = setInterval(() => {
+      if (child !== this.child || !this.port || Date.now() - this.heardAt < SILENT_MS) return
+      this.hung = `The engine stopped answering for ${SILENT_MS / 1000} s (a recitation in progress was not saved)`
+      child.kill()
+    }, 1000)
   }
 
   _died(message) {
@@ -123,7 +138,9 @@ export class Engine extends EventEmitter {
       const res = await this.request('/events')
       const decoder = new TextDecoder()
       let buf = ''
+      this.heardAt = Date.now()
       for await (const part of res.body) {
+        this.heardAt = Date.now()
         buf += decoder.decode(part, { stream: true })
         let end
         while ((end = buf.indexOf('\n\n')) >= 0) {

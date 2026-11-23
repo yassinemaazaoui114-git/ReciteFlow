@@ -11,6 +11,8 @@ Recitation events (recite.py): "frame", "done", "error". Errors answer {"error":
 Model and compute type: RECITEFLOW_MODEL / RECITEFLOW_COMPUTE (default large-v3-turbo, int8_float16).
 History: RECITEFLOW_DB (default ReciteFlow/data/history.db; tests give a temporary one).
 Replays (a "wav" in /recite) are saved only with RECITEFLOW_SAVE_REPLAY=1.
+A recitation that does not move for RECITEFLOW_STALL_S seconds (default 30) ends the engine with exit code 3, after
+an "error" event and a plain-words last line on stderr; the window then starts it again.
 """
 import ctypes
 import hmac
@@ -19,14 +21,19 @@ import os
 import queue
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import recite
 
 HEARTBEAT_S = 15   # an empty comment line on the event stream this often, so a dead connection is noticed
 MAX_BODY = 1_000_000   # bytes; a pasted text is far smaller
+STALL_S = float(os.environ.get("RECITEFLOW_STALL_S") or 30)   # a recitation that does not move this long is stuck
+STALL_EXIT = 3     # exit code after a stuck recitation; the window shows the last stderr line and restarts the engine
+STALL_LOG = os.path.join(tempfile.gettempdir(), "reciteflow-stall.txt")   # where every thread was at that moment
 
 TOKEN = os.environ.get("RECITEFLOW_TOKEN", "")
 MODEL = os.environ.get("RECITEFLOW_MODEL", "large-v3-turbo")
@@ -220,6 +227,29 @@ class Handler(BaseHTTPRequestHandler):
                 _clients.remove(q)
 
 
+def _watch_recitation():
+    """End the engine when a recitation is stuck (no audio block or step for STALL_S seconds). A thread stuck in the
+    audio device or the speech model cannot be stopped from Python, so the engine exits and the window starts a
+    fresh one. Every thread's stack goes to STALL_LOG first, to see where it hung."""
+    while True:
+        time.sleep(1)
+        if not engine.stalled(STALL_S):
+            continue
+        try:
+            names = {t.ident: t.name for t in threading.enumerate()}
+            with open(STALL_LOG, "w", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}: no progress for {STALL_S:g} s\n")
+                for ident, frame in sys._current_frames().items():
+                    f.write(f"\n--- {names.get(ident, ident)}\n" + "".join(traceback.format_stack(frame)))
+        except OSError:
+            pass
+        message = f"The recitation stopped responding for {STALL_S:g} s and was not saved"
+        emit("error", {"message": message})
+        print(message, file=sys.stderr, flush=True)
+        time.sleep(0.5)   # let the error reach the window
+        os._exit(STALL_EXIT)
+
+
 def _exit_when_parent_goes(pid):
     """Wait for the Electron process to end (quit or crash), then stop.
     Not done by reading stdin: on Windows a waiting read on a pipe blocks other calls on it, and imports can hang."""
@@ -243,6 +273,7 @@ def main():
     if parent:
         threading.Thread(target=_exit_when_parent_goes, args=(parent,), daemon=True).start()
     threading.Thread(target=_load, daemon=True).start()
+    threading.Thread(target=_watch_recitation, daemon=True).start()
     print(json.dumps({"port": server.server_address[1]}), flush=True)
     server.serve_forever()
 

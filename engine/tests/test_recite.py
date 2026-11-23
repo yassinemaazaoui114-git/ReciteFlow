@@ -57,3 +57,31 @@ def test_correct_saves_and_updates_the_counts(tmp_path):
     assert [t.user_state for t in history.tokens(rec_id)] == [None, "not_said", "correct", None]
     out = engine.correct(2, None)  # undo
     assert out["counts"]["wrong"] == 1 and not out["tokens"][2]["corrected"]
+
+
+def test_stalled_when_the_audio_stops_coming():
+    import threading
+    import time
+
+    gate = threading.Event()
+
+    def blocks():
+        for _ in range(3):
+            time.sleep(0.02)
+            yield b""
+        gate.wait(5)  # the audio stops: no more blocks
+        yield b""
+
+    engine = Engine(lambda *a: None)
+    assert not engine.stalled(0)  # nothing running
+    engine._running = True
+    engine.progress_at = time.perf_counter()
+    t = threading.Thread(target=lambda: list(engine._until_stop(blocks())), daemon=True)
+    t.start()
+    time.sleep(0.04)
+    assert not engine.stalled(0.3)  # blocks still arriving
+    time.sleep(0.5)
+    assert engine.stalled(0.3)
+    gate.set()
+    t.join(2)
+    assert not engine.stalled(0.3)  # moved again
