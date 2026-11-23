@@ -1,16 +1,15 @@
-"""Which OCR reads a photo of a page best, with the least time, memory and GPU?
+"""How well does the OCR read a photo of a page, with how much time, memory and GPU?
 
   py -3.12 engine/check_ocr.py make    # makes the test pictures in engine/clips/ocr/generated/
-  py -3.12 engine/check_ocr.py run     # reads every picture with each OCR, scores it, writes the report
+  py -3.12 engine/check_ocr.py run     # reads every picture, scores it, writes the report
 
 Pictures: the practice texts drawn as a page (fonts, sizes), then made to look like a clean scan, a phone photo
 (tilt, perspective, shadow, blur, noise, JPEG), a dim photo, a far-away (small) photo and a dark-mode screenshot.
 Real photos: put them in engine/clips/ocr/real/ with the true text next to each (same name, .txt).
-Each OCR runs in its own process, one after the other (never two GPU jobs at once): model load time, time per
-picture, peak RAM of that process, peak VRAM added (whole card, nvidia-smi), and words wrong (word error rate after
-the same clean-up for all: lower case, no punctuation). Results in test_out/ocr/report.txt and results.json.
-The app reads photos with RapidOCR (read_text.py). Tesseract (UB Mannheim build) and EasyOCR were tried and then
-removed; `--engines tesseract,easyocr` needs them installed again (pip pytesseract, easyocr).
+The OCR runs in its own process: model load time, time per picture, peak RAM of that process, peak VRAM added
+(whole card, nvidia-smi), and words wrong (word error rate after a clean-up: lower case, no punctuation). Results in
+test_out/ocr/report.txt and results.json. The OCR is RapidOCR, as in the app (read_text.py); it was chosen over
+Windows' own OCR, Tesseract and EasyOCR on these pictures, which were then removed.
 """
 import argparse
 import json
@@ -31,8 +30,7 @@ GEN = os.path.join(OCR_DIR, "generated")
 REAL = os.path.join(OCR_DIR, "real")
 OUT = os.path.join(ROOT, "test_out", "ocr")
 FONTS = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
-TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-ENGINES = ["windows", "windows_x2", "rapidocr"]   # also: "tesseract", "easyocr" (when installed)
+ENGINES = ["rapidocr"]
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".jfif", ".bmp", ".gif", ".tif", ".tiff", ".webp", ".heic", ".heif")
 
 
@@ -147,48 +145,10 @@ def make():
     print(f"{n} pictures in {GEN}")
 
 
-# ---- The OCRs: each returns pieces of text as (corners, text): 4 corners (x, y) clockwise from top left ----
+# ---- The OCR: returns pieces of text as (corners, text): 4 corners (x, y) clockwise from top left ----
 def load_rgb(path):
     from PIL import Image, ImageOps
     return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
-
-
-def make_windows_x2():
-    """Windows OCR on the picture enlarged twice (small print reads better), kept under its size limit."""
-    return make_windows(scale=2)
-
-
-def make_windows(scale=1):
-    import asyncio
-    from winrt.windows.globalization import Language
-    from winrt.windows.graphics.imaging import (BitmapDecoder, BitmapTransform, ExifOrientationMode,
-                                                BitmapPixelFormat, BitmapAlphaMode, ColorManagementMode,
-                                                BitmapInterpolationMode)
-    from winrt.windows.media.ocr import OcrEngine
-    from winrt.windows.storage import StorageFile, FileAccessMode
-    engine = OcrEngine.try_create_from_language(Language("en-US"))
-
-    async def read(path):
-        f = await StorageFile.get_file_from_path_async(os.path.abspath(path))
-        stream = await f.open_async(FileAccessMode.READ)
-        dec = await BitmapDecoder.create_async(stream)
-        transform = BitmapTransform()
-        k = min(scale, OcrEngine.max_image_dimension / max(dec.oriented_pixel_width, dec.oriented_pixel_height))
-        if k > 1:
-            # the transform sizes the picture before it is turned upright: the stored width and height
-            transform.scaled_width, transform.scaled_height = int(dec.pixel_width * k), int(dec.pixel_height * k)
-            transform.interpolation_mode = BitmapInterpolationMode.FANT
-        bmp = await dec.get_software_bitmap_async(BitmapPixelFormat.BGRA8, BitmapAlphaMode.PREMULTIPLIED,
-                                                  transform, ExifOrientationMode.RESPECT_EXIF_ORIENTATION,
-                                                  ColorManagementMode.DO_NOT_COLOR_MANAGE)
-        res = await engine.recognize_async(bmp)
-        out = []
-        for line in res.lines:
-            rs = [w.bounding_rect for w in line.words]
-            out.append((rect(min(r.x for r in rs), min(r.y for r in rs), max(r.x + r.width for r in rs),
-                             max(r.y + r.height for r in rs)), line.text))
-        return out
-    return lambda path: asyncio.run(read(path))
 
 
 def make_rapidocr():
@@ -202,42 +162,6 @@ def make_rapidocr():
             return []
         return [([(float(x), float(y)) for x, y in b], t) for b, t in zip(res.boxes, res.txts)]
     return read
-
-
-def make_tesseract():
-    import pytesseract
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT
-
-    def read(path):
-        d = pytesseract.image_to_data(load_rgb(path), lang="eng", output_type=pytesseract.Output.DICT)
-        lines = {}
-        for i, word in enumerate(d["text"]):
-            if not word.strip():
-                continue
-            key = (d["block_num"][i], d["par_num"][i], d["line_num"][i])
-            x, y, w, h = d["left"][i], d["top"][i], d["width"][i], d["height"][i]
-            if key in lines:
-                x0, y0, x1, y1, t = lines[key]
-                lines[key] = (min(x0, x), min(y0, y), max(x1, x + w), max(y1, y + h), t + " " + word)
-            else:
-                lines[key] = (x, y, x + w, y + h, word)
-        return [(rect(*b[:4]), b[4]) for b in lines.values()]
-    return read
-
-
-def make_easyocr():
-    import numpy as np
-    import easyocr
-    reader = easyocr.Reader(["en"], gpu=True, verbose=False)
-
-    def read(path):
-        res = reader.readtext(np.asarray(load_rgb(path)))
-        return [([(float(x), float(y)) for x, y in b], t) for b, t, _ in res]
-    return read
-
-
-def rect(x0, y0, x1, y1):
-    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
 
 
 # ---- Scoring ----
