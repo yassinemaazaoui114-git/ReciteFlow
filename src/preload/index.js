@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 // The page has no Node access; it only gets these few named calls.
 contextBridge.exposeInMainWorld('reciteflow', {
@@ -18,9 +18,11 @@ contextBridge.exposeInMainWorld('reciteflow', {
   correct: (recId, pos, state) => ipcRenderer.invoke('correct', recId, pos, state), // state null = undo
   getSettings: () => ipcRenderer.invoke('settings-get'), // { keep_audio }
   setSettings: (settings) => ipcRenderer.invoke('settings-set', settings),
-  // Open a file: pickFile answers { name, photo, pdf } or { canceled }; readPicked(pages) answers { text, ocr },
+  // Open a file: pickFile answers { name, photo, pdf }, { canceled } or { error }; readPicked(pages) answers { text, ocr },
   // { pages: n } (a PDF of more than 2 pages, pages not given: '3', '3-4' or '3, 7') or { error }
   pickFile: () => ipcRenderer.invoke('file-pick'),
+  // a file dropped on the window: answers like pickFile, or { error } (a type it cannot open)
+  dropFile: (file) => ipcRenderer.invoke('file-drop', webUtils.getPathForFile(file)),
   readPicked: (pages) => ipcRenderer.invoke('file-read', pages),
   // The window's theme: 'system' (follows Windows) | 'light' | 'dark'; answers { theme } or { error }
   getTheme: () => ipcRenderer.invoke('theme-get'),

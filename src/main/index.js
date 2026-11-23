@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
 import { execFile } from 'node:child_process'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, extname, join, resolve } from 'node:path'
 import { Engine } from './engine'
@@ -71,7 +71,7 @@ function saveTheme(theme) {
 }
 
 // Open a file for the text box: a .txt file, a PDF or a photo of a page. The page picks it (pickFile: the Windows
-// file dialog), then asks for its text (readPicked): engine/read_text.py reads it in its own short process, so the
+// file dialog) or drops it on the window (dropFile), then asks for its text (readPicked): engine/read_text.py reads it in its own short process, so the
 // OCR's memory is given back at once and the speech engine is never touched. Only the file picked last can be read.
 // A PDF of more than 2 pages answers { pages } first; the page then asks again with the pages chosen.
 const TEXT_FILES = ['txt']
@@ -94,8 +94,23 @@ async function pickFile(win) {
     if (!res.canceled) path = res.filePaths[0]
   }
   if (!path) return { canceled: true }
-  picked = path
+  return usePath(path)
+}
+// A file dropped on the window (its path from the preload; '' for a file not saved on this PC)
+function dropFile(path) {
+  // self-tests cannot drag from Explorer: the dropped file comes from RECITEFLOW_PICK
+  if (process.env.RECITEFLOW_SELFTEST && process.env.RECITEFLOW_PICK != null) path = process.env.RECITEFLOW_PICK
+  if (!path) return { error: 'Drop a file saved on this PC.' }
+  return usePath(path)
+}
+function usePath(path) {
   const ext = extname(path).slice(1).toLowerCase()
+  let isFile = false
+  try { isFile = statSync(path).isFile() } catch { /* gone or unreadable */ }
+  if (!isFile || ![...TEXT_FILES, ...PDFS, ...PHOTOS].includes(ext)) {
+    return { error: 'ReciteFlow opens a text file (.txt), a PDF or a photo of a page.' }
+  }
+  picked = path
   return { name: basename(path), photo: PHOTOS.includes(ext), pdf: PDFS.includes(ext) }
 }
 async function readPicked(pages) {
@@ -199,6 +214,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings-set', (_e, settings) => engine.call('/settings', settings))
   const win = createWindow()
   ipcMain.handle('file-pick', () => pickFile(win))
+  ipcMain.handle('file-drop', (_e, path) => dropFile(typeof path === 'string' ? path : ''))
   ipcMain.handle('file-read', (_e, pages) => readPicked(pages))
   const send =(status) => { if (!win.isDestroyed()) win.webContents.send('engine-status', status) }
   const forward = (event, data) => {
@@ -230,6 +246,8 @@ app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_SELFTEST === 'polish') return (await import('./selftest-polish')).run(win, engine)
   // RECITEFLOW_SELFTEST=stall: a stuck recitation and a hung engine end with a message (src/main/selftest-stall.js)
   if (process.env.RECITEFLOW_SELFTEST === 'stall') return (await import('./selftest-stall')).run(win, engine)
+  // RECITEFLOW_SELFTEST=drop: drag and drop on each screen (src/main/selftest-drop.js)
+  if (process.env.RECITEFLOW_SELFTEST === 'drop') return (await import('./selftest-drop')).run(win, engine)
   // RECITEFLOW_SELFTEST=shots: the README pictures (src/main/selftest-shots.js)
   if (process.env.RECITEFLOW_SELFTEST === 'shots') return (await import('./selftest-shots')).run(win, engine)
   // RECITEFLOW_SELFTEST=1: print what the page shows, save a picture of it in test_out/, then quit

@@ -2,7 +2,8 @@
 // recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
 // it is done, the whole text, the result line, Recite again and Edit text; after a saved recitation a click on a word
 // opens the menu to correct the app. The settings button (top right) opens Settings (the theme) in the text box's
-// place, when not reciting. "Open a file" fills the text box from a .txt, a PDF or a photo, through a popup.
+// place, when not reciting. "Open a file" (or a file dropped on the window) fills the text box from a .txt, a PDF
+// or a photo, through a popup.
 import { LABELS, drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
@@ -90,7 +91,7 @@ function update() {
   if (settingsOpen) return void ($('hint').innerHTML = `Changes apply at once. ${kbd('Esc')} to go back.`)
   if (phase === 'done') return showResult()
   $('hint').innerHTML = {
-    edit: `Paste the text you want to recite or open a file ${kbd('Ctrl+O')}, then press Start ${kbd('Ctrl+Enter')}`,
+    edit: `Paste the text you want to recite, or open or drop a file ${kbd('Ctrl+O')}, then press Start ${kbd('Ctrl+Enter')}`,
     listening: (hide.checked
       ? 'Recite from memory: each word appears as you say it and takes its colour a moment later. '
       : 'Recite the text from memory. Each word darkens as you say it and takes its colour a moment later. ')
@@ -383,10 +384,13 @@ function showReading(file, what) {
   $('pick-part').disabled = $('pick-all').disabled = true
 }
 
+const canOpen = () => phase === 'edit' && !settingsOpen && !pick.open
 async function openFile() {
-  if (phase !== 'edit' || settingsOpen || pick.open) return
-  const file = await api.pickFile()
-  if (file.canceled || phase !== 'edit' || pick.open) return
+  if (canOpen()) openPicked(await api.pickFile())
+}
+function openPicked(file) {
+  if (file.canceled || !canOpen()) return
+  if (file.error) return showStatus('bad', file.error)
   showReading(file, file.photo ? '. Reading the words in the photo ' : '. Reading it ')
   $('pick-range').value = ''
   pick.showModal()
@@ -478,6 +482,45 @@ $('pick-cancel').addEventListener('click', () => pick.close())
 $('pick-part').addEventListener('click', () => { if (pickPart()) usePick(pickPart()) })
 $('pick-all').addEventListener('click', () => { if (pickText.value.trim()) usePick(pickText.value.trim()) })
 $('open-file').addEventListener('click', openFile)
+
+// ---- Drag and drop: a file dropped on the text screen opens as with "Open a file". While a file is dragged over
+// the window, a zone covers the text box. Elsewhere (reciting, the result, Settings, the popup) a dropped file does
+// nothing. Text dragged inside the text box is left alone. ----
+const drop = $('drop')
+let dragDepth = 0   // dragenter / dragleave pairs: the zone hides when the file leaves the window
+const draggingFiles = (e) => e.dataTransfer?.types.includes('Files')
+function showDrop(on) {
+  if (on && drop.hidden) {
+    const r = box.getBoundingClientRect()
+    Object.assign(drop.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` })
+  }
+  drop.hidden = !on
+}
+document.addEventListener('dragenter', (e) => {
+  if (!draggingFiles(e)) return
+  e.preventDefault()
+  dragDepth++
+  showDrop(canOpen())
+})
+document.addEventListener('dragover', (e) => {
+  if (!draggingFiles(e)) return
+  e.preventDefault()   // otherwise the window would open the file itself
+  e.dataTransfer.dropEffect = canOpen() ? 'copy' : 'none'
+})
+document.addEventListener('dragleave', (e) => {
+  if (!draggingFiles(e) || --dragDepth > 0) return
+  dragDepth = 0
+  showDrop(false)
+})
+document.addEventListener('drop', async (e) => {
+  if (!draggingFiles(e)) return
+  e.preventDefault()
+  dragDepth = 0
+  showDrop(false)
+  if (!canOpen()) return
+  if (e.dataTransfer.files.length !== 1) return showStatus('bad', 'Drop one file at a time.')
+  openPicked(await api.dropFile(e.dataTransfer.files[0]))
+})
 
 // ---- Start / Stop ----
 async function start() {
