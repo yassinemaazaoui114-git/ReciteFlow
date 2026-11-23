@@ -79,7 +79,7 @@ class Client:
 
 
 def main():
-    tmp = Path(tempfile.mkdtemp(prefix="reciteflow_t04_"))
+    tmp = Path(tempfile.mkdtemp(prefix="reciteflow_check_"))
     token = secrets.token_hex(32)
     env = {**os.environ, "RECITEFLOW_TOKEN": token, "RECITEFLOW_DB": str(tmp / "history.db"),
            "RECITEFLOW_SAVE_REPLAY": "1", "PYTHONIOENCODING": "utf-8", "HF_HUB_DISABLE_SYMLINKS_WARNING": "1"}

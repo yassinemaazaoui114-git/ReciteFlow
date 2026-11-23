@@ -9,8 +9,8 @@ import { basename, join } from 'node:path'
 // RECITEFLOW_HIDE=0 turns hide off first; RECITEFLOW_EXPECT=<n> = the number of correct words expected at the end.
 // Then the result screen: the whole text, the counters and the done line (written the old window's way from the
 // final words), Recite again (stopped after a few seconds: "(n said)"), and Edit text back to the box.
-// Pictures and a log go to test_out/t2.2/.
-const outDir = join(app.getAppPath(), 'test_out', 't2.2')
+// Pictures and a log go to test_out/recite/.
+const outDir = join(app.getAppPath(), 'test_out', 'recite')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function waitFor(engine, status, ms) {

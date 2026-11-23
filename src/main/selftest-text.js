@@ -6,8 +6,8 @@ import { join } from 'node:path'
 // Text screen check (RECITEFLOW_SELFTEST=text): Start is disabled while the model loads -> the mic list is the old
 // window's -> hide and beep start on -> an empty text is refused -> "keep" is saved and still set after an engine
 // restart -> a text typed in the box and Ctrl+Enter start a recitation (the mic, or the replay with
-// RECITEFLOW_WAV) -> Esc stops it -> Edit text goes back to the box. Pictures and a log go to test_out/t2.1/ (suffix "-replay" with RECITEFLOW_WAV).
-const outDir = join(app.getAppPath(), 'test_out', 't2.1')
+// RECITEFLOW_WAV) -> Esc stops it -> Edit text goes back to the box. Pictures and a log go to test_out/text/ (suffix "-replay" with RECITEFLOW_WAV).
+const outDir = join(app.getAppPath(), 'test_out', 'text')
 const OLD_APP = join(app.getAppPath(), '..', 'ReciteFlow')
 
 function waitFor(engine, status, ms) {

@@ -7,9 +7,9 @@ import { join } from 'node:path'
 // an engine message, reciting, result, word menu) in both themes, checked for anything cut off or outside the window.
 // Motion: a word's colour has no transition or animation; screen changes come in within 200 ms. Keyboard: one word in
 // the Tab order after a saved recitation, the arrows move along the words, Enter opens the menu, Esc closes it back on
-// the word, a choice is saved and the focus stays on the word. Pictures and a log go to test_out/t3.1/.
+// the word, a choice is saved and the focus stays on the word. Pictures and a log go to test_out/polish/.
 const scale = process.env.RECITEFLOW_SCALE || '1'
-const outDir = join(app.getAppPath(), 'test_out', 't3.1')
+const outDir = join(app.getAppPath(), 'test_out', 'polish')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function waitFor(engine, status, ms) {

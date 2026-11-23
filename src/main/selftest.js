@@ -5,8 +5,8 @@ import { join } from 'node:path'
 
 // Engine check (run with RECITEFLOW_SELFTEST=engine): engine ready -> request without token refused -> kill it
 // -> it restarts -> ready -> killed 3 more times -> gives up, "Start again" -> clicked -> ready -> an engine whose
-// parent process ends exits by itself -> quit. Screenshots and a log go to test_out/t0.2/.
-const outDir = join(app.getAppPath(), 'test_out', 't0.2')
+// parent process ends exits by itself -> quit. Screenshots and a log go to test_out/engine/.
+const outDir = join(app.getAppPath(), 'test_out', 'engine')
 
 function waitFor(engine, status, ms) {
   return new Promise((resolve, reject) => {

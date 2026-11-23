@@ -10,8 +10,8 @@ import { basename, join } from 'node:path'
 // Esc and a click outside close the menu without saving; a refused save shows its message. After each click: the
 // menu (what the app said, the check mark, Undo), the tint, the counters, the done line and the status. At the end
 // engine/check_corrections.py applies the same clicks with the old window's own History.correct to a copy of the
-// history taken before the first click and compares every row. Pictures and a log go to test_out/t2.4/.
-const outDir = join(app.getAppPath(), 'test_out', 't2.4')
+// history taken before the first click and compares every row. Pictures and a log go to test_out/correct/.
+const outDir = join(app.getAppPath(), 'test_out', 'correct')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const COUNTED = ['correct', 'misspelled', 'wrong', 'missed', 'pending']
 

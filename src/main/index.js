@@ -110,7 +110,7 @@ function createWindow() {
 }
 
 // RECITEFLOW_PAGE=design: the design sheet, no engine. With RECITEFLOW_SELFTEST=design it saves a full-page
-// picture of each theme in test_out/t1.1/ and quits.
+// picture of each theme in test_out/design/ and quits.
 function openDesignSheet() {
   const win = new BrowserWindow({
     width: 1120, height: 820, title: 'ReciteFlow design sheet', icon: join(app.getAppPath(), 'build', 'icon.ico'),
@@ -121,7 +121,7 @@ function openDesignSheet() {
   else win.loadFile(join(__dirname, '../renderer/design.html'))
   if (process.env.RECITEFLOW_SELFTEST !== 'design') return
   win.webContents.once('did-finish-load', () => setTimeout(async () => {
-    const outDir = join(app.getAppPath(), 'test_out', 't1.1')
+    const outDir = join(app.getAppPath(), 'test_out', 'design')
     mkdirSync(outDir, { recursive: true })
     const height = await win.webContents.executeJavaScript('document.documentElement.scrollHeight')
     win.setContentSize(1120, Math.min(height, 6000))
@@ -187,7 +187,7 @@ app.whenReady().then(async () => {
   if (process.env.RECITEFLOW_SELFTEST) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
       console.log('[reciteflow] page:', await win.webContents.executeJavaScript('document.body.innerText'))
-      const shot = join(app.getAppPath(), 'test_out', 't01_window.png')
+      const shot = join(app.getAppPath(), 'test_out', 'window.png')
       mkdirSync(dirname(shot), { recursive: true })
       writeFileSync(shot, (await win.webContents.capturePage()).toPNG())
       console.log('[reciteflow] picture:', shot)

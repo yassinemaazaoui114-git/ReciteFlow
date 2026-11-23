@@ -6,8 +6,8 @@ import { join } from 'node:path'
 // RECITEFLOW_SELFTEST=settings: starts from no saved theme (Windows) -> the settings button opens Settings -> Light,
 // then Dark, each timed from the click to the first drawn frame in the new colours -> Esc goes back to the text box.
 // RECITEFLOW_SELFTEST=settings-restart: the window opens dark, Dark is checked -> Windows again, saved. No engine.
-// Pictures and a log go to test_out/t2.6/.
-const outDir = join(app.getAppPath(), 'test_out', 't2.6')
+// Pictures and a log go to test_out/settings/.
+const outDir = join(app.getAppPath(), 'test_out', 'settings')
 const file = () => join(app.getPath('userData'), 'window-settings.json')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const saved = () => { try { return JSON.parse(readFileSync(file(), 'utf8')).theme } catch { return null } }
