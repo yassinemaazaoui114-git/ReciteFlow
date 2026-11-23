@@ -42,7 +42,7 @@ Reading it back afterwards is slow, and it is easy to miss a skipped or swapped 
 
 ReciteFlow does the checking for you:
 
-1. **Paste** the text you want to learn.
+1. **Paste** the text you want to learn, or open a file (a text file, a PDF or a photo of a page).
 2. **Press Start** and recite it from memory, out loud, into your microphone.
 3. **Watch** each word appear as you say it, coloured by whether you said it right. A short beep tells you the moment
    you make a mistake, so you can even recite with your eyes closed.
@@ -68,12 +68,20 @@ The counters under the text (Correct, Misspelled, Wrong, Missed, Extra, Not yet 
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/text-dark.png" alt="The text screen: paste a text, choose your microphone and options, press Start" /></td>
+    <td width="50%"><img src="docs/images/drop-dark.png" alt="A file dragged over the window: a dashed zone says Drop it to open" /></td>
+    <td width="50%"><img src="docs/images/open-light.png" alt="The words read from a photo of a page, with the first sentence selected" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>1. Open or drop a file</b><br/>A text file, a PDF or a photo of a page, or just paste the text.</td>
+    <td align="center"><b>2. Pick what to recite</b><br/>Check the words read from the file, then take a part or all of it.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/text-dark.png" alt="The text screen with the text read from the photo, ready to start" /></td>
     <td width="50%"><img src="docs/images/result-dark.png" alt="The result: the whole text coloured, with the number of correct words and the extra words" /></td>
   </tr>
   <tr>
-    <td align="center"><b>1. Paste your text</b><br/>Choose the microphone and options, then press Start.</td>
-    <td align="center"><b>2. See the result</b><br/>The whole text, coloured, with a one-line summary.</td>
+    <td align="center"><b>3. Press Start</b><br/>Choose the microphone and options, then recite.</td>
+    <td align="center"><b>4. See the result</b><br/>The whole text, coloured, with a one-line summary.</td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/reciting-light.png" alt="While reciting with the text hidden: only the words already said are shown" /></td>
@@ -103,7 +111,7 @@ Light and dark themes are both built in (Settings, top right: Windows, Light or 
   recordings for training" on, the audio is kept too.
 - **Open a text file, a PDF or a photo.** Take a picture of a book page and ReciteFlow reads its words (on your
   computer, without the graphics card), then lets you pick the part to recite. PDFs are read up to 2 pages at a time,
-  scanned pages included; charts are left out.
+  scanned pages included; charts are left out. Click *Open a file* or drag the file onto the window.
 - **Light and dark themes**, following Windows by default.
 - **Keyboard friendly.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> starts, <kbd>Esc</kbd> stops, and words can be corrected
   without a mouse.
@@ -145,7 +153,8 @@ To start it again later, open a terminal in the `ReciteFlow` folder and run `npm
 ## How to use it
 
 1. **Paste your text** into the big box. Line breaks are kept. Or click **Open a file** (<kbd>Ctrl</kbd>+<kbd>O</kbd>)
-   and pick a `.txt` file, a PDF or a photo of a page (JPG, PNG, HEIC, WebP...). For a PDF of more than 2 pages,
+   and pick a `.txt` file, a PDF or a photo of a page (JPG, PNG, HEIC, WebP...), or drag the file onto the window.
+   For a PDF of more than 2 pages,
    first type the pages to read (one or two, like `3` or `3-4`). A window shows the text found: fix any misread word,
    then select the part you want and press *Use this part*, or press *Take it all*.
 2. **Pick your microphone** in the list at the bottom left (or leave *Default microphone*).
