@@ -72,6 +72,9 @@ body {
 .btn-quiet { background: transparent; color: var(--ink); border-color: var(--line-strong); }
 .btn-quiet:hover:not(:disabled) { background: var(--surface-2); }
 .btn-small { height: 32px; padding: 0 var(--s3); font-size: var(--text-sm); }
+/* The main choice of a popup (Take it all): filled with ink, so green stays Start's own colour */
+.btn-strong { background: var(--ink); color: var(--bg); }
+.btn-strong:hover:not(:disabled) { background: var(--ink-2); }
 /* Settings: a round icon-only button, quiet until hovered */
 .btn-icon { width: 36px; height: 36px; padding: 0; background: transparent; color: var(--muted); }
 .btn-icon:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
@@ -397,6 +400,28 @@ body {
 .menu-item i { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; flex: none; }
 .menu-sep { height: 1px; margin: 6px 4px; background: var(--line); }
 
+/* ---- Popup (pick what to recite from an opened file): a raised sheet over a dimmed window ---- */
+.pick {
+  width: min(760px, calc(100vw - 48px));
+  height: min(600px, calc(100vh - 48px));
+  padding: var(--s6) var(--s6) var(--s5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+  font: 400 var(--text-md) / 1.4 var(--font-ui);
+}
+.pick[open] { display: flex; flex-direction: column; gap: var(--s3); animation: pop-in var(--t-pop) var(--ease-out); }
+.pick::backdrop { background: rgb(13 20 36 / 0.45); animation: fade-in var(--t-pop) var(--ease-out); }
+.pick-title { margin: 0; font: 600 var(--text-xl) / 1.2 var(--font-read-display); }
+.pick .hint b { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.pick-text { flex: 1; min-height: 0; margin-top: var(--s1); box-shadow: none; background: var(--surface);
+  scrollbar-color: var(--line-strong) transparent; }
+.pick-text:disabled { color: var(--muted); }
+.pick-text::selection { background: color-mix(in srgb, var(--ring) 28%, transparent); }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.98) translateY(4px); } }
+
 @keyframes fade-in { from { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -405,5 +430,6 @@ body {
   .seg button:active, .switch:active::after { transform: none; }
   .switch:checked:active::after { transform: translateX(16px); }
   .menu, .menu[hidden] { transform: none; }
+  .pick[open] { animation-name: fade-in; }
   .btn:active:not(:disabled) { transform: none; }
 }

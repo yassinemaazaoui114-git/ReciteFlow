@@ -9,3 +9,13 @@ silero-vad
 # Windows + CUDA: cuBLAS/cuDNN DLLs for faster-whisper (ctranslate2); asr/_cuda.py puts them on the DLL path
 nvidia-cublas-cu12; sys_platform == "win32"
 nvidia-cudnn-cu12==9.*; sys_platform == "win32"
+# Open a file: OCR of a photo of a page (read_text.py, CPU), Windows' picture decoder for HEIC photos
+rapidocr
+pillow
+winrt-Windows.Graphics.Imaging; sys_platform == "win32"
+winrt-Windows.Storage; sys_platform == "win32"
+winrt-Windows.Storage.Streams; sys_platform == "win32"
+winrt-Windows.Foundation; sys_platform == "win32"
+# check_ocr.py only: Windows' own OCR, compared with RapidOCR
+winrt-Windows.Media.Ocr; sys_platform == "win32"
+winrt-Windows.Globalization; sys_platform == "win32"

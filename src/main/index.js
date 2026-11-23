@@ -1,8 +1,8 @@
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
 import { execFile } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, extname, join, resolve } from 'node:path'
 import { Engine } from './engine'
 
 // Self-tests never touch the real history: the engine gets a temporary one
@@ -68,6 +68,45 @@ function saveTheme(theme) {
     return { error: 'Could not save the theme.' }
   }
   return { theme }
+}
+
+// Open a file for the text box: a .txt file or a photo of a page. The page picks it (pickFile: the Windows file
+// dialog), then asks for its text (readPicked): engine/read_text.py reads it in its own short process, so the OCR's
+// memory is given back at once and the speech engine is never touched. Only the file picked last can be read.
+const TEXT_FILES = ['txt']
+const PHOTOS = ['png', 'jpg', 'jpeg', 'jpe', 'jfif', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'webp', 'avif', 'heic', 'heif']
+let picked = null
+async function pickFile(win) {
+  let path = null
+  if (process.env.RECITEFLOW_SELFTEST && process.env.RECITEFLOW_PICK != null) {
+    // self-tests cannot click in the Windows dialog: the next file comes from RECITEFLOW_PICK ('' = cancelled)
+    path = process.env.RECITEFLOW_PICK || null
+  } else {
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Open a text or a photo of a page',
+      properties: ['openFile'],
+      filters: [{ name: 'Text or photo', extensions: [...TEXT_FILES, ...PHOTOS] },
+        { name: 'Text files', extensions: TEXT_FILES }, { name: 'Photos', extensions: PHOTOS }]
+    })
+    if (!res.canceled) path = res.filePaths[0]
+  }
+  if (!path) return { canceled: true }
+  picked = path
+  return { name: basename(path), photo: PHOTOS.includes(extname(path).slice(1).toLowerCase()) }
+}
+async function readPicked() {
+  if (!picked) return { error: 'Pick a file first.' }
+  let python
+  try { python = await engine.pythonPath() } catch (e) { return { error: e.message } }
+  return new Promise((done) => {
+    execFile(python, ['-u', join(engine.dir, 'read_text.py'), picked], {
+      cwd: engine.dir, windowsHide: true, timeout: 120000, maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    }, (err, stdout) => {
+      try { return done(JSON.parse(stdout.trim().split(/\r?\n/).pop())) } catch { /* no answer line */ }
+      done({ error: err?.killed ? 'Reading the file took too long (2 minutes).' : 'Could not read this file.' })
+    })
+  })
 }
 
 async function systemInfo() {
@@ -153,7 +192,9 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings-get', () => engine.call('/settings'))
   ipcMain.handle('settings-set', (_e, settings) => engine.call('/settings', settings))
   const win = createWindow()
-  const send = (status) => { if (!win.isDestroyed()) win.webContents.send('engine-status', status) }
+  ipcMain.handle('file-pick', () => pickFile(win))
+  ipcMain.handle('file-read', () => readPicked())
+  const send =(status) => { if (!win.isDestroyed()) win.webContents.send('engine-status', status) }
   const forward = (event, data) => {
     if (['frame', 'done', 'error'].includes(event) && !win.isDestroyed()) win.webContents.send('recite-' + event, data)
   }
@@ -164,6 +205,8 @@ app.whenReady().then(async () => {
     s.loadSeconds != null ? `model loaded in ${s.loadSeconds} s` : '', s.message || ''))
   // the settings check needs no engine (and no GPU)
   if (process.env.RECITEFLOW_SELFTEST?.startsWith('settings')) return (await import('./selftest-settings')).run(win)
+  // the open-a-file check needs no engine either (src/main/selftest-open.js)
+  if (process.env.RECITEFLOW_SELFTEST === 'open') return (await import('./selftest-open')).run(win)
   // RECITEFLOW_SELFTEST=speed: start-up, memory and VRAM marks for an outside measurement (src/main/selftest-speed.js)
   const speed = process.env.RECITEFLOW_SELFTEST === 'speed' && (await import('./selftest-speed')).run(win, engine)
   engine.start()

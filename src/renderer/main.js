@@ -2,7 +2,7 @@
 // recitation's phases: edit -> listening -> finishing -> done. While reciting, the page shows the live words; when
 // it is done, the whole text, the result line, Recite again and Edit text; after a saved recitation a click on a word
 // opens the menu to correct the app. The settings button (top right) opens Settings (the theme) in the text box's
-// place, when not reciting.
+// place, when not reciting. "Open a file" fills the text box from a .txt or a photo, through a popup.
 import { LABELS, drawTally, drawWords } from './design/words.js'
 
 const api = window.reciteflow
@@ -80,6 +80,7 @@ function update() {
   $('open-settings').toggleAttribute('aria-pressed', settingsOpen)
   page.dataset.phase = phase
   edit.hidden = phase !== 'done'
+  $('open-file').hidden = phase !== 'edit'
   if (phase !== 'done') closeMenu()
   words.toggleAttribute('data-clickable', canCorrect())
   wordStops()
@@ -89,7 +90,7 @@ function update() {
   if (settingsOpen) return void ($('hint').innerHTML = `Changes apply at once. ${kbd('Esc')} to go back.`)
   if (phase === 'done') return showResult()
   $('hint').innerHTML = {
-    edit: `Paste the text you want to recite, then press Start ${kbd('Ctrl+Enter')}`,
+    edit: `Paste the text you want to recite or open a file ${kbd('Ctrl+O')}, then press Start ${kbd('Ctrl+Enter')}`,
     listening: (hide.checked
       ? 'Recite from memory: each word appears as you say it and takes its colour a moment later. '
       : 'Recite the text from memory. Each word darkens as you say it and takes its colour a moment later. ')
@@ -344,9 +345,78 @@ $('open-settings').addEventListener('click', (e) => {
 })
 $('close-settings').addEventListener('click', closeSettings)
 
+// ---- Open a file (Ctrl+O): a .txt or a photo of a page. A popup shows the text found, to fix it and pick the part
+// to recite ("Use this part") or "Take it all"; the choice replaces the text box's text (Ctrl+Z brings it back) ----
+const pick = $('pick')
+const pickText = $('pick-text')
+let reading = 0   // which opening is in progress; the text of a cancelled one is dropped when it arrives
+const wordCount = (s) => s.split(/\s+/).filter(Boolean).length
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+const pickPart = () => pickText.value.slice(pickText.selectionStart, pickText.selectionEnd).trim()
+
+function pickHint(name, ...rest) {
+  const b = document.createElement('b')
+  b.textContent = name
+  $('pick-hint').replaceChildren('From ', b, ...rest)
+}
+function showPickCount() {
+  if (pickText.disabled) return
+  const part = pickPart()
+  const all = wordCount(pickText.value)
+  $('pick-count').textContent = part ? `${wordCount(part)} of ${plural(all, 'word')} selected` : plural(all, 'word')
+  $('pick-part').disabled = !part
+  $('pick-all').disabled = !all
+}
+
+async function openFile() {
+  if (phase !== 'edit' || settingsOpen || pick.open) return
+  const file = await api.pickFile()
+  if (file.canceled || phase !== 'edit' || pick.open) return
+  const id = ++reading
+  const dots = document.createElement('span')
+  dots.className = 'dots'
+  dots.innerHTML = '<i></i><i></i><i></i>'
+  pickHint(file.name, file.photo ? '. Reading the words in the photo ' : '. Reading it ', dots)
+  pickText.value = ''
+  pickText.disabled = true
+  $('pick-count').textContent = ''
+  $('pick-part').disabled = $('pick-all').disabled = true
+  pick.showModal()
+  const res = await api.readPicked()
+  if (id !== reading || !pick.open) return
+  if (res.error) {
+    pick.close()
+    return showStatus('bad', res.error)
+  }
+  pickHint(file.name, '. Select the part to recite, or take it all. '
+    + (file.photo ? 'Check the words first: a photo can be misread, and you can fix them here.' : 'You can change it here first.'))
+  pickText.disabled = false
+  pickText.value = res.text
+  pickText.setSelectionRange(0, 0)
+  pickText.scrollTop = 0
+  pickText.focus()
+  showPickCount()
+}
+
+function usePick(text) {
+  pick.close()
+  box.focus()
+  box.select()
+  if (!document.execCommand('insertText', false, text)) box.value = text   // insertText keeps Ctrl+Z
+  box.setSelectionRange(0, 0)
+  box.scrollTop = 0
+}
+
+for (const ev of ['select', 'selectionchange', 'input', 'keyup', 'mouseup']) pickText.addEventListener(ev, showPickCount)
+pick.addEventListener('close', () => { reading++ })   // Esc, Cancel or a choice: a reading still going is dropped
+$('pick-cancel').addEventListener('click', () => pick.close())
+$('pick-part').addEventListener('click', () => { if (pickPart()) usePick(pickPart()) })
+$('pick-all').addEventListener('click', () => { if (pickText.value.trim()) usePick(pickText.value.trim()) })
+$('open-file').addEventListener('click', openFile)
+
 // ---- Start / Stop ----
 async function start() {
-  if ((phase !== 'edit' && phase !== 'done') || !loaded() || settingsOpen) return
+  if ((phase !== 'edit' && phase !== 'done') || !loaded() || settingsOpen || pick.open) return
   const text = box.value.trim()
   if (!text) return showStatus('bad', 'Paste a text first.')
   phase = 'listening'
@@ -387,6 +457,8 @@ go.addEventListener('click', () => (phase === 'listening' ? stop() : start()))
 edit.addEventListener('click', editText)
 $('again').addEventListener('click', () => api.restartEngine())
 document.addEventListener('keydown', (e) => {
+  if (pick.open) return   // the popup has its own keys (Esc closes it)
+  if (e.ctrlKey && e.key.toLowerCase() === 'o') { e.preventDefault(); openFile() }
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); start() }
   if (e.key === 'Escape') {
     if (!menu.hidden) return closeMenu(true)

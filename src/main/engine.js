@@ -38,11 +38,16 @@ export class Engine extends EventEmitter {
     this.emit('status', this.status)
   }
 
+  // The python.exe the engine runs with (found once); the engine's other scripts run with it too
+  async pythonPath() {
+    return this.python || (this.python = await findPython())
+  }
+
   async start() {
     this._set({ status: 'starting', loadSeconds: null, message: null })
     let python
     try {
-      python = this.python || (this.python = await findPython())
+      python = await this.pythonPath()
     } catch (e) {
       return this._set({ status: 'stopped', message: e.message })
     }

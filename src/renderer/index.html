@@ -20,6 +20,7 @@
       <symbol id="i-cross" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></symbol>
       <symbol id="i-gear" viewBox="0 0 16 16"><path d="M2 4.5h7M12.5 4.5H14M2 11.5h1.5M7 11.5h7" /><circle cx="10.75" cy="4.5" r="1.75" /><circle cx="5.25" cy="11.5" r="1.75" /></symbol>
       <symbol id="i-back" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" /></symbol>
+      <symbol id="i-open" viewBox="0 0 16 16"><path d="M9 1.75H4.5A1.5 1.5 0 0 0 3 3.25v9.5a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5v-7z" /><path d="M9 1.75V5.75h4M5.75 9h4.5M5.75 11.5h3" /></symbol>
     </svg>
 
     <main class="app">
@@ -70,6 +71,8 @@
       <div class="bar" id="options">
         <label class="option"><input type="checkbox" class="switch" id="hide" checked /> Hide the text while I recite</label>
         <label class="option"><input type="checkbox" class="switch" id="beep" checked /> Beep on a mistake</label>
+        <span class="grow"></span>
+        <button class="btn btn-quiet btn-small" id="open-file" title="Open a text file or a photo of a page (Ctrl+O)"><svg class="icon"><use href="#i-open" /></svg>Open a file</button>
       </div>
       <div class="bar" id="actions">
         <label class="picker"><svg class="icon"><use href="#i-mic" /></svg>
@@ -87,6 +90,21 @@
         <button class="btn btn-quiet" id="close-settings"><svg class="icon"><use href="#i-back" /></svg>Back</button>
       </div>
     </main>
+
+    <dialog class="pick" id="pick" aria-labelledby="pick-title">
+      <h2 class="pick-title" id="pick-title">Pick what to recite</h2>
+      <p class="hint" id="pick-hint"></p>
+      <textarea class="field pick-text" id="pick-text" spellcheck="false" aria-label="Text found in the file"></textarea>
+      <div class="bar">
+        <span class="hint" id="pick-count" aria-live="polite"></span>
+        <span class="grow"></span>
+        <div class="end">
+          <button class="btn btn-quiet" id="pick-cancel">Cancel</button>
+          <button class="btn btn-quiet" id="pick-part" disabled>Use this part</button>
+          <button class="btn btn-strong" id="pick-all" disabled>Take it all</button>
+        </div>
+      </div>
+    </dialog>
     <script type="module" src="./main.js"></script>
   </body>
 </html>

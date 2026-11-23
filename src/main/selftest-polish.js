@@ -35,7 +35,7 @@ const LAYOUT = `(() => {
     if (el.matches('button, .option, .title, .tally li') && el.scrollWidth > el.clientWidth + 1) bad.push(name + ' text cut off')
   }
   // the words (or the text box) keep at least two and a half lines
-  const page = document.querySelector('.page:not([hidden]) .scroll, textarea:not([hidden])')
+  const page = document.querySelector('.page:not([hidden]) .scroll, .app > textarea:not([hidden])')
   const line = parseFloat(getComputedStyle(page?.matches('textarea') ? page : document.getElementById('words')).lineHeight)
   if (page && page.clientHeight < 2.5 * line) bad.push('reading area only ' + (page.clientHeight / line).toFixed(1) + ' lines tall')
   return { bad, size: W + 'x' + H, dpr: devicePixelRatio }

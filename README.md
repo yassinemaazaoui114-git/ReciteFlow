@@ -101,6 +101,8 @@ Light and dark themes are both built in (Settings, top right: Windows, Light or 
   counters and the summary update at once, and your correction is saved.
 - **History.** Every recitation from the microphone is saved on your computer, with its result. With "Keep my
   recordings for training" on, the audio is kept too.
+- **Open a text file or a photo.** Take a picture of a book page and ReciteFlow reads its words (on your computer,
+  without the graphics card), then lets you pick the part to recite.
 - **Light and dark themes**, following Windows by default.
 - **Keyboard friendly.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> starts, <kbd>Esc</kbd> stops, and words can be corrected
   without a mouse.
@@ -141,7 +143,9 @@ To start it again later, open a terminal in the `ReciteFlow` folder and run `npm
 
 ## How to use it
 
-1. **Paste your text** into the big box. Line breaks are kept.
+1. **Paste your text** into the big box. Line breaks are kept. Or click **Open a file** (<kbd>Ctrl</kbd>+<kbd>O</kbd>)
+   and pick a `.txt` file or a photo of a page (JPG, PNG, HEIC, WebP...). A window shows the text found: fix any
+   misread word, then select the part you want and press *Use this part*, or press *Take it all*.
 2. **Pick your microphone** in the list at the bottom left (or leave *Default microphone*).
 3. **Choose your options:**
    - *Hide the text while I recite*: on, to really test your memory.
@@ -166,6 +170,7 @@ To start it again later, open a terminal in the `ReciteFlow` folder and run `npm
 - Your voice is processed **only on your computer**, by your own graphics card.
 - Recitations are saved **only on your computer**. Recordings are kept only if you turn on *Keep my recordings for
   training*.
+- Photos you open are read on your computer too (the text-reading models come with the Python packages).
 - The only network access is the one-time download of the speech model.
 - ReciteFlow's window talks to its speech engine on your own machine only (`127.0.0.1`, with a random key), so nothing
   can reach it from outside.
@@ -224,6 +229,7 @@ Measured on a practice set with 152 spoken mistakes:
 | "Could not load the speech model" | Check that you have an NVIDIA graphics card and an up-to-date driver, then click *Start again*. Close other programs that use a lot of GPU memory. |
 | "The engine stopped..." message | ReciteFlow restarts the engine by itself; wait for **Ready**. The recitation in progress is not saved. |
 | No words appear while I speak | Check that the right microphone is selected and that Windows lets apps use it (*Settings > Privacy > Microphone*). |
+| A photo gives wrong or missing words | Take the photo straight on, in good light, with the page filling most of the picture; fix the remaining words in the window before *Take it all*. |
 | Many words marked wrong | Speak a little slower and closer to the microphone, and reduce background noise. Click a word to correct the app if it misheard you. |
 | `py` is not recognised | Install Python 3.12 from python.org with the *py launcher* option ticked. |
 
@@ -237,6 +243,7 @@ src/preload/       the few named calls the page may use (the page has no Node ac
 src/renderer/      the page; design/ holds the design system (tokens, components, word colours)
 engine/server.py   local server: routes and live events (server-sent events)
 engine/recite.py   the recitation logic, no user interface
+engine/read_text.py  reads an opened .txt or photo (RapidOCR, on the CPU) for the text box
 engine/asr/        microphone and WAV input, Silero VAD, faster-whisper, acoustic check, live passes
 engine/matcher/    text normalisation and word alignment
 engine/core/       session logic, history (SQLite) and corrections
