@@ -3,12 +3,12 @@ import { execFile, execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-// Text screen check (RECITEFLOW_SELFTEST=text): Start is disabled while the model loads -> the mic list is the old
-// window's -> hide and beep start on -> an empty text is refused -> "keep" is saved and still set after an engine
+// Text screen check (RECITEFLOW_SELFTEST=text): Start is disabled while the model loads -> the mic list is the
+// engine's -> hide and beep start on -> an empty text is refused -> "keep" is saved and still set after an engine
 // restart -> a text typed in the box and Ctrl+Enter start a recitation (the mic, or the replay with
 // RECITEFLOW_WAV) -> Esc stops it -> Edit text goes back to the box. Pictures and a log go to test_out/text/ (suffix "-replay" with RECITEFLOW_WAV).
 const outDir = join(app.getAppPath(), 'test_out', 'text')
-const OLD_APP = join(app.getAppPath(), '..', 'ReciteFlow')
+const ENGINE_DIR = join(app.getAppPath(), 'engine')
 
 function waitFor(engine, status, ms) {
   return new Promise((resolve, reject) => {
@@ -31,11 +31,11 @@ async function until(win, fn, ms, what) {
   throw new Error(`${what}: not seen within ${ms} ms`)
 }
 
-// The microphones as the old window lists them (its own input_devices, run read-only: no .pyc written)
-function oldMics() {
+// The microphones as recite.input_devices lists them, asked directly (no .pyc written)
+function engineMics() {
   return new Promise((resolve, reject) => {
-    execFile('py', ['-3.12', '-B', '-c', 'import json, gui; print(json.dumps([n for _, n in gui.input_devices()]))'],
-      { cwd: OLD_APP, windowsHide: true, timeout: 60000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } },
+    execFile('py', ['-3.12', '-B', '-c', 'import json, recite; print(json.dumps([n for _, n in recite.input_devices()]))'],
+      { cwd: ENGINE_DIR, windowsHide: true, timeout: 60000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } },
       (err, stdout) => (err ? reject(err) : resolve(JSON.parse(stdout.trim().split(/\r?\n/).pop()))))
   })
 }
@@ -84,13 +84,13 @@ export async function run(win, engine) {
         `mic picker disabled = ${await js("document.getElementById('mic').disabled")}, ` +
         `keep disabled = ${await js("document.getElementById('keep').disabled")}`)
     } else {
-      // Mic list, against the old window's
+      // Mic list, against recite.input_devices
       const page = await js("[...document.getElementById('mic').options].map((o) => o.textContent)")
-      const old = await oldMics()
-      const same = JSON.stringify(page) === JSON.stringify(['Default microphone', ...old])
+      const mics = await engineMics()
+      const same = JSON.stringify(page) === JSON.stringify(['Default microphone', ...mics])
       note(`mic list (${page.length}): ${JSON.stringify(page)}`)
-      note(`old window's list: ${JSON.stringify(['Default microphone', ...old])} -> ${same ? 'same' : 'DIFFERENT'}`)
-      if (!same) throw new Error('the mic list differs from the old window')
+      note(`input_devices: ${JSON.stringify(['Default microphone', ...mics])} -> ${same ? 'same' : 'DIFFERENT'}`)
+      if (!same) throw new Error('the mic list differs from input_devices')
 
       // Defaults, as the old window: hide and beep on at every start
       const defaults = await js("[document.getElementById('hide').checked, document.getElementById('beep').checked]")

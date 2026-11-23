@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CLIPS = HERE.parents[1] / "ReciteFlow" / "clips"
+CLIPS = HERE / "clips"
 WAV, TEXT = CLIPS / "this_step.wav", (CLIPS / "this_step.txt").read_text(encoding="utf-8").strip()
 
 failures = []

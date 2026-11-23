@@ -1,13 +1,13 @@
-"""Checks that the window saves corrections exactly as the old window does.
+"""Checks that the window saves corrections exactly as `core.history` does.
 
   py -3.12 engine/check_corrections.py snapshot <history.db> <copy.db>
       a copy of the history right after the recitation was saved, before any click
   py -3.12 engine/check_corrections.py compare <copy.db> <history.db> <clicks.json>
-      applies the same clicks ({rec_id, clicks: [[pos, state or null], ...]}) to the copy with the old window's own
-      `History.correct` (loaded from the ReciteFlow folder, read only), then compares every row of both databases;
+      applies the same clicks ({rec_id, clicks: [[pos, state or null], ...]}) to the copy with `History.correct`
+      from `core/history.py` (loaded straight from the file), then compares every row of both databases;
       `corrected_at` is compared as set / not set (the clicks happen at different times). Exit code 0 = identical.
 
-Only temporary histories are used; nothing is written in the ReciteFlow folder.
+Only temporary histories are used.
 """
 
 import importlib.util
@@ -19,8 +19,7 @@ import tempfile
 from contextlib import closing
 from pathlib import Path
 
-sys.dont_write_bytecode = True  # no __pycache__ in the ReciteFlow folder
-OLD_HISTORY = Path(__file__).resolve().parents[2] / "ReciteFlow" / "core" / "history.py"
+HISTORY_PY = Path(__file__).resolve().parent / "core" / "history.py"
 
 
 def snapshot(src, dst):
@@ -44,7 +43,7 @@ def rows(path):
 
 
 def compare(before, after, clicks_path):
-    spec = importlib.util.spec_from_file_location("old_history", OLD_HISTORY)
+    spec = importlib.util.spec_from_file_location("reference_history", HISTORY_PY)
     old = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(old)
     clicks = json.loads(Path(clicks_path).read_text(encoding="utf-8"))
@@ -61,7 +60,7 @@ def compare(before, after, clicks_path):
         diff = [i for i in range(max(len(a), len(b))) if (a[i:i + 1] or [None]) != (b[i:i + 1] or [None])]
         print(f"{table}: {len(b)} rows, {'identical' if not diff else f'{len(diff)} differ'}")
         for i in diff[:10]:
-            print(f"  old window: {a[i] if i < len(a) else None}\n  new window: {b[i] if i < len(b) else None}")
+            print(f"  History.correct: {a[i] if i < len(a) else None}\n  window: {b[i] if i < len(b) else None}")
         same &= not diff
     rec = [r for r in got.get("tokens", []) if r["recitation_id"] == clicks["rec_id"] and r["user_state"]]
     print(f"{len(clicks['clicks'])} clicks, {len(rec)} corrections left: "
